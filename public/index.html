@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TextShare • 3-hour public text uploads</title>
+<link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>TextShare</h1>
+    <div class="who">
+      <label for="name">Name</label>
+      <input id="name" type="text" maxlength="32" placeholder="Your name" />
+      <button id="setName">Set</button>
+    </div>
+  </header>
+  <main>
+    <section class="upload">
+      <form id="uploadForm">
+        <label class="file">
+          <input id="file" type="file" accept=".txt,.md,.csv,.json,.xml,.html,.css,.js,text/plain,text/*,application/json,application/xml" />
+          <span>Choose a text file</span>
+        </label>
+        <button type="submit">Upload</button>
+        <p class="hint">Only text files up to 2 MB. Visible to everyone. Auto-delete after 3 hours.</p>
+      </form>
+    </section>
+    <section class="list">
+      <h2>Recent uploads</h2>
+      <ul id="files" aria-live="polite"></ul>
+    </section>
+  </main>
+  <footer><p>Public text sharing • No accounts • Auto-expire in 3 hours</p></footer>
+</div>
+<script src="https://cdn.socket.io/4.7.5/socket.io.min.js" crossorigin="anonymous"></script>
+<script src="/client.js"></script>
+</body>
+</html>
