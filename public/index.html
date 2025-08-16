@@ -76,6 +76,15 @@
       color: #fff;
       cursor: pointer;
     }
+    #leaveBtn {
+      margin-top: 10px;
+      padding: 8px 12px;
+      border: 1px solid #fff;
+      background: #000;
+      color: #fff;
+      cursor: pointer;
+      align-self: center;
+    }
   </style>
 </head>
 <body>
@@ -83,7 +92,7 @@
   <div id="joinScreen" class="active">
     <h1>Join Chatroom</h1>
     <input id="joinName" placeholder="Enter your name" />
-    <button id="joinBtn">Enter</button>
+    <button id="joinBtn" type="button">Enter</button>
   </div>
 
   <!-- Chat Screen -->
@@ -94,6 +103,7 @@
         <input id="input" autocomplete="off" placeholder="Type your message..." />
         <button id="send">Send</button>
       </form>
+      <button id="leaveBtn">Leave Chatroom</button>
     </div>
   </div>
 
@@ -107,6 +117,7 @@
     const chatScreen = document.getElementById('chatScreen');
     const joinName = document.getElementById('joinName');
     const joinBtn = document.getElementById('joinBtn');
+    const leaveBtn = document.getElementById('leaveBtn');
 
     let username = "";
 
@@ -135,12 +146,21 @@
       }
     });
 
-    joinBtn.addEventListener("click", () => {
+    joinBtn.addEventListener("click", (e) => {
+      e.preventDefault();
       if (joinName.value.trim()) {
         username = joinName.value.trim();
         joinScreen.classList.remove("active");
         chatScreen.classList.add("active");
       }
+    });
+
+    leaveBtn.addEventListener("click", () => {
+      username = "";
+      messages.innerHTML = "";
+      chatScreen.classList.remove("active");
+      joinScreen.classList.add("active");
+      joinName.value = "";
     });
   </script>
 </body>
