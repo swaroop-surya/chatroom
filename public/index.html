@@ -4,26 +4,97 @@
   <meta charset="UTF-8">
   <title>Chatroom</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #f5f5f5; }
-    #chat { width: 600px; margin: 20px auto; background: #fff; border: 1px solid #ccc; border-radius: 8px; padding: 10px; }
-    #messages { list-style: none; padding: 0; max-height: 400px; overflow-y: auto; }
-    #messages li { padding: 5px; border-bottom: 1px solid #eee; }
-    #form { display: flex; margin-top: 10px; }
-    #input { flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
-    #send { padding: 8px 12px; margin-left: 5px; border: none; background: #007bff; color: white; border-radius: 4px; cursor: pointer; }
-    #send:hover { background: #0056b3; }
-    #username { width: 200px; padding: 5px; margin-bottom: 10px; }
+    body {
+      font-family: 'Courier New', monospace;
+      background: #000;
+      color: #fff;
+      margin: 0;
+      padding: 0;
+    }
+    #joinScreen, #chatScreen {
+      display: none;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+    #joinScreen.active, #chatScreen.active {
+      display: flex;
+    }
+    h1 {
+      margin-bottom: 20px;
+    }
+    input, button {
+      padding: 10px;
+      font-family: 'Courier New', monospace;
+      border: 1px solid #fff;
+      background: #000;
+      color: #fff;
+      margin: 5px 0;
+    }
+    button {
+      cursor: pointer;
+    }
+    #chat {
+      width: 90%;
+      max-width: 600px;
+      border: 1px solid #fff;
+      border-radius: 4px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      height: 80vh;
+    }
+    #messages {
+      list-style: none;
+      padding: 0;
+      flex: 1;
+      overflow-y: auto;
+      margin: 0 0 10px 0;
+    }
+    #messages li {
+      padding: 5px;
+      border-bottom: 1px solid #333;
+      word-wrap: break-word;
+    }
+    #form {
+      display: flex;
+    }
+    #input {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #fff;
+      background: #000;
+      color: #fff;
+    }
+    #send {
+      padding: 10px;
+      border: 1px solid #fff;
+      background: #000;
+      color: #fff;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
-  <div id="chat">
-    <h2>Chatroom</h2>
-    <input id="username" placeholder="Enter your name" />
-    <ul id="messages"></ul>
-    <form id="form">
-      <input id="input" autocomplete="off" placeholder="Type your message..." />
-      <button id="send">Send</button>
-    </form>
+  <!-- Join Screen -->
+  <div id="joinScreen" class="active">
+    <h1>Join Chatroom</h1>
+    <input id="joinName" placeholder="Enter your name" />
+    <button id="joinBtn">Enter</button>
+  </div>
+
+  <!-- Chat Screen -->
+  <div id="chatScreen">
+    <div id="chat">
+      <ul id="messages"></ul>
+      <form id="form">
+        <input id="input" autocomplete="off" placeholder="Type your message..." />
+        <button id="send">Send</button>
+      </form>
+    </div>
   </div>
 
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
@@ -32,7 +103,12 @@
     const form = document.getElementById('form');
     const input = document.getElementById('input');
     const messages = document.getElementById('messages');
-    const usernameInput = document.getElementById('username');
+    const joinScreen = document.getElementById('joinScreen');
+    const chatScreen = document.getElementById('chatScreen');
+    const joinName = document.getElementById('joinName');
+    const joinBtn = document.getElementById('joinBtn');
+
+    let username = "";
 
     function addMessage(msg) {
       const li = document.createElement('li');
@@ -53,9 +129,17 @@
 
     form.addEventListener("submit", (e) => {
       e.preventDefault();
-      if (input.value && usernameInput.value) {
-        socket.emit("chat message", { user: usernameInput.value, text: input.value });
+      if (input.value && username) {
+        socket.emit("chat message", { user: username, text: input.value });
         input.value = "";
+      }
+    });
+
+    joinBtn.addEventListener("click", () => {
+      if (joinName.value.trim()) {
+        username = joinName.value.trim();
+        joinScreen.classList.remove("active");
+        chatScreen.classList.add("active");
       }
     });
   </script>
