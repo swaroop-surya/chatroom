@@ -1,40 +1,63 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>TextShare • 3-hour public text uploads</title>
-<link rel="stylesheet" href="/styles.css" />
+  <meta charset="UTF-8">
+  <title>Chatroom</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f5f5f5; }
+    #chat { width: 600px; margin: 20px auto; background: #fff; border: 1px solid #ccc; border-radius: 8px; padding: 10px; }
+    #messages { list-style: none; padding: 0; max-height: 400px; overflow-y: auto; }
+    #messages li { padding: 5px; border-bottom: 1px solid #eee; }
+    #form { display: flex; margin-top: 10px; }
+    #input { flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+    #send { padding: 8px 12px; margin-left: 5px; border: none; background: #007bff; color: white; border-radius: 4px; cursor: pointer; }
+    #send:hover { background: #0056b3; }
+    #username { width: 200px; padding: 5px; margin-bottom: 10px; }
+  </style>
 </head>
 <body>
-<div id="app">
-  <header>
-    <h1>TextShare</h1>
-    <div class="who">
-      <label for="name">Name</label>
-      <input id="name" type="text" maxlength="32" placeholder="Your name" />
-      <button id="setName">Set</button>
-    </div>
-  </header>
-  <main>
-    <section class="upload">
-      <form id="uploadForm">
-        <label class="file">
-          <input id="file" type="file" accept=".txt,.md,.csv,.json,.xml,.html,.css,.js,text/plain,text/*,application/json,application/xml" />
-          <span>Choose a text file</span>
-        </label>
-        <button type="submit">Upload</button>
-        <p class="hint">Only text files up to 2 MB. Visible to everyone. Auto-delete after 3 hours.</p>
-      </form>
-    </section>
-    <section class="list">
-      <h2>Recent uploads</h2>
-      <ul id="files" aria-live="polite"></ul>
-    </section>
-  </main>
-  <footer><p>Public text sharing • No accounts • Auto-expire in 3 hours</p></footer>
-</div>
-<script src="https://cdn.socket.io/4.7.5/socket.io.min.js" crossorigin="anonymous"></script>
-<script src="/client.js"></script>
+  <div id="chat">
+    <h2>Chatroom</h2>
+    <input id="username" placeholder="Enter your name" />
+    <ul id="messages"></ul>
+    <form id="form">
+      <input id="input" autocomplete="off" placeholder="Type your message..." />
+      <button id="send">Send</button>
+    </form>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const form = document.getElementById('form');
+    const input = document.getElementById('input');
+    const messages = document.getElementById('messages');
+    const usernameInput = document.getElementById('username');
+
+    function addMessage(msg) {
+      const li = document.createElement('li');
+      const time = new Date(msg.timestamp).toLocaleTimeString();
+      li.textContent = `[${time}] ${msg.user}: ${msg.text}`;
+      messages.appendChild(li);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    socket.on("init", (msgs) => {
+      messages.innerHTML = "";
+      msgs.forEach(addMessage);
+    });
+
+    socket.on("chat message", (msg) => {
+      addMessage(msg);
+    });
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      if (input.value && usernameInput.value) {
+        socket.emit("chat message", { user: usernameInput.value, text: input.value });
+        input.value = "";
+      }
+    });
+  </script>
 </body>
 </html>
