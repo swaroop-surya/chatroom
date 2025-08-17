@@ -9,6 +9,13 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 app.use(express.static(path.join(__dirname, "public")));
+app.use((req, res, next) => {
+  const host = req.headers.host;
+  if (host && host.startsWith("chatlab.free.nf")) {
+    return res.redirect("https://www.chatlab.free.nf" + req.url);
+  }
+  next();
+});
 
 // Room store
 const rooms = {
