@@ -67,7 +67,21 @@
     margin-top: 12px;
   }
 }
-
+#roomList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+  margin-top: 12px;
+}
+#roomList .card {
+  min-width: 200px;
+  text-align: center;
+}
+#roomList .card.active {
+  border-color: lime;
+  background: #111;
+}
   </style>
 </head>
 <body>
