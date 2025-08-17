@@ -4,13 +4,13 @@ A tiny website where anyone can upload **text files** (no accounts). All uploads
 
 ## Features
 - No login; users set a display name
-- Upload text files up to 2 MB (txt, md, csv, json, html, xml, css, js)
+- Upload
 - Everyone sees new files instantly (Socket.IO)
 - Inline previews for small files
 - Files are removed automatically after 3 hours
 
 ## Requirements
-- Node.js 18+
+- Node.js 
 
 ## Run locally
 ```bash
