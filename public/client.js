@@ -75,9 +75,8 @@ joinBtn.addEventListener("click", () => {
       div.dataset.id = r.id;
       div.textContent = `${r.name} (${r.users} online)`;
       div.addEventListener("click", () => {
-        roomList.querySelectorAll(".card").forEach(c => c.style.borderColor = "#fff");
-        div.style.borderColor = "lime";
-        roomList.dataset.selected = r.id;
+        roomList.querySelectorAll(".card").forEach(c => c.classList.remove("active"));
+        div.classList.add("active");
       });
       roomList.appendChild(div);
     });
@@ -86,24 +85,17 @@ joinBtn.addEventListener("click", () => {
 
 // Join room
 joinRoomBtn.addEventListener("click", () => {
-  const selected = roomList.dataset.selected;
-  if (!selected) return alert("Select a room first");
-  joinRoom(selected, joinPass.value);
+  const selected = roomList.querySelector(".card.active");
+  if (!selected) {
+    alert("Select a room first");
+    return;
+  }
+  joinRoom(selected.dataset.id, joinPass.value);
 });
 
-// Update users live
-socket.on("roomUsers", ({ roomId, count }) => {
-  document.querySelectorAll(`#roomList .card`).forEach(card => {
-    if (card.dataset.id === roomId) {
-      const base = card.textContent.split("(")[0].trim();
-      card.textContent = `${base} (${count} online)`;
-    }
-  });
-});
-
-
+// Join room function
 function joinRoom(roomId, password) {
-  socket.emit("joinRoom", { roomId, password }, res => {
+  socket.emit("joinRoom", { roomId, password, user: username }, res => {
     if (res.error) return alert(res.error);
     currentRoom = roomId;
     roomTitle.textContent = res.roomName;
@@ -131,6 +123,16 @@ function addMessage(msg) {
   messagesEl.appendChild(li);
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
+
+// Update users live
+socket.on("roomUsers", ({ roomId, count }) => {
+  document.querySelectorAll(`#roomList .card`).forEach(card => {
+    if (card.dataset.id === roomId) {
+      const base = card.textContent.split("(")[0].trim();
+      card.textContent = `${base} (${count} online)`;
+    }
+  });
+});
 
 // Leave
 leaveBtn.addEventListener("click", () => {
