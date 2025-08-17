@@ -70,18 +70,37 @@ joinBtn.addEventListener("click", () => {
   socket.emit("listRooms", rooms => {
     roomList.innerHTML = "";
     rooms.forEach(r => {
-      const opt = document.createElement("option");
-      opt.value = r.id;
-      opt.textContent = r.name;
-      roomList.appendChild(opt);
+      const div = document.createElement("div");
+      div.className = "card";
+      div.dataset.id = r.id;
+      div.textContent = `${r.name} (${r.users} online)`;
+      div.addEventListener("click", () => {
+        roomList.querySelectorAll(".card").forEach(c => c.style.borderColor = "#fff");
+        div.style.borderColor = "lime";
+        roomList.dataset.selected = r.id;
+      });
+      roomList.appendChild(div);
     });
   });
 });
 
 // Join room
 joinRoomBtn.addEventListener("click", () => {
-  joinRoom(roomList.value, joinPass.value);
+  const selected = roomList.dataset.selected;
+  if (!selected) return alert("Select a room first");
+  joinRoom(selected, joinPass.value);
 });
+
+// Update users live
+socket.on("roomUsers", ({ roomId, count }) => {
+  document.querySelectorAll(`#roomList .card`).forEach(card => {
+    if (card.dataset.id === roomId) {
+      const base = card.textContent.split("(")[0].trim();
+      card.textContent = `${base} (${count} online)`;
+    }
+  });
+});
+
 
 function joinRoom(roomId, password) {
   socket.emit("joinRoom", { roomId, password }, res => {
