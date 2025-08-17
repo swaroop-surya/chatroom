@@ -13,172 +13,64 @@
       color: #fff;
       margin: 0;
     }
-    /* Screens */
-    #joinScreen, #chatScreen {
-      display: none;           /* hidden by default */
-      height: 100vh;
-      padding: 24px;
-      box-sizing: border-box;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-    }
+    section { display: none; height: 100vh; padding: 24px; box-sizing: border-box;
+      align-items: center; justify-content: center; text-align: center; }
     .active { display: flex !important; flex-direction: column; gap: 12px; }
-
-    h1 { margin: 0 0 8px; font-weight: 700; }
-    p { margin: 0; color: #aaa; }
-
-    /* Controls */
-    input, button {
-      font-family: "Courier New", monospace;
-      background: #000;
-      color: #fff;
-      border: 1px solid #fff;
-      padding: 10px 12px;
-      outline: none;
-    }
-    input::placeholder { color: #888; }
+    input, button { font-family: inherit; background: #000; color: #fff; border: 1px solid #fff; padding: 10px 12px; }
     button { cursor: pointer; }
-    button:disabled { opacity: .5; cursor: not-allowed; }
-
-    /* Chat container */
-    #chat {
-      width: min(92vw, 720px);
-      border: 1px solid #fff;
-      border-radius: 4px;
-      padding: 12px;
-      display: flex;
-      flex-direction: column;
-      height: min(80vh, 760px);
-      margin-inline: auto;
-    }
-    #messages {
-      list-style: none;
-      padding: 0;
-      margin: 0 0 10px 0;
-      flex: 1;
-      overflow-y: auto;
-      border: 1px solid #333;
-    }
-    #messages li {
-      padding: 8px 10px;
-      border-bottom: 1px solid #222;
-      word-wrap: break-word;
-      text-align: left;
-    }
-    #form { display: flex; gap: 8px; }
-    #input { flex: 1; }
-    #send { white-space: nowrap; }
-    #leaveBtn {
-      margin-top: 10px;
-      align-self: center;
-      border-color: #999;
-      color: #ddd;
-    }
-
-    /* Small helpers */
-    .row { display: flex; gap: 8px; justify-content: center; }
-    .stack { display: flex; flex-direction: column; gap: 10px; align-items: center; }
+    #chat { width: min(92vw, 720px); border: 1px solid #fff; padding: 12px; display: flex; flex-direction: column; height: min(80vh, 760px); margin: auto; }
+    #messages { list-style: none; padding: 0; margin: 0 0 10px 0; flex: 1; overflow-y: auto; border: 1px solid #333; }
+    #messages li { padding: 6px 10px; border-bottom: 1px solid #222; text-align: left; }
+    .cards { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
+    .card { border: 1px solid #fff; padding: 20px; cursor: pointer; }
   </style>
 </head>
 <body>
   <!-- Join Screen -->
   <section id="joinScreen" class="active">
-    <div class="stack" role="group" aria-labelledby="joinTitle">
-      <h1 id="joinTitle">Join Chatroom</h1>
-      <p>Enter name to continue</p>
-      <form id="joinForm" class="row" autocomplete="off">
-        <input id="joinName" name="name" placeholder="Enter your name" required />
-        <button id="joinBtn" type="submit">Enter</button>
-      </form>
+    <h1>Join Chatroom</h1>
+    <form id="joinForm">
+      <input id="joinName" placeholder="Enter your name" required />
+      <button type="submit">Enter</button>
+    </form>
+  </section>
+
+  <!-- Menu Screen -->
+  <section id="menuScreen">
+    <h1>Choose Chatroom</h1>
+    <div class="cards">
+      <div class="card" id="randomBtn">Random Group Chat</div>
+      <div class="card" id="createBtn">Create Chatroom</div>
+      <div class="card" id="joinBtn">Join Chatroom</div>
+    </div>
+    <!-- Create Room -->
+    <div id="createForm" style="display:none; margin-top:20px;">
+      <input id="newRoomName" placeholder="Room name"/>
+      <input id="newRoomPass" placeholder="Password"/>
+      <button id="createRoomBtn">Create</button>
+    </div>
+    <!-- Join Room -->
+    <div id="joinForm2" style="display:none; margin-top:20px;">
+      <select id="roomList"></select>
+      <input id="joinPass" placeholder="Password"/>
+      <button id="joinRoomBtn">Join</button>
     </div>
   </section>
 
   <!-- Chat Screen -->
-  <section id="chatScreen" aria-live="polite" aria-label="Chat area">
+  <section id="chatScreen">
     <div id="chat">
+      <h2 id="roomTitle"></h2>
       <ul id="messages"></ul>
-      <form id="form" autocomplete="off">
-        <input id="input" placeholder="Type your message..." />
-        <button id="send" type="submit">Send</button>
+      <form id="form">
+        <input id="input" placeholder="Type message..."/>
+        <button type="submit">Send</button>
       </form>
-      <button id="leaveBtn" type="button">Leave Chatroom</button>
+      <button id="leaveBtn">Leave Chatroom</button>
     </div>
   </section>
 
-  <!-- Socket.IO client via CDN (works well on Render free tier) -->
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-  <script>
-    const socket = io();
-
-    // Elements
-    const joinScreen = document.getElementById('joinScreen');
-    const chatScreen = document.getElementById('chatScreen');
-    const joinForm   = document.getElementById('joinForm');
-    const joinName   = document.getElementById('joinName');
-    const messagesEl = document.getElementById('messages');
-    const form       = document.getElementById('form');
-    const input      = document.getElementById('input');
-    const leaveBtn   = document.getElementById('leaveBtn');
-
-    let username = '';
-
-    function showJoin() {
-      chatScreen.classList.remove('active');
-      joinScreen.classList.add('active');
-      messagesEl.innerHTML = '';
-      username = '';
-      joinName.value = '';
-      joinName.focus();
-    }
-    function showChat() {
-      joinScreen.classList.remove('active');
-      chatScreen.classList.add('active');
-      input.focus();
-    }
-    function addMessage(msg) {
-      const li = document.createElement('li');
-      const time = new Date(msg.timestamp).toLocaleTimeString();
-      li.textContent = `[${time}] ${msg.user}: ${msg.text}`;
-      messagesEl.appendChild(li);
-      messagesEl.scrollTop = messagesEl.scrollHeight;
-    }
-
-    // Initial messages from server
-    socket.on('init', (msgs) => {
-      messagesEl.innerHTML = '';
-      (msgs || []).forEach(addMessage);
-    });
-    socket.on('chat message', addMessage);
-
-    // Join handlers (button AND Enter key)
-    joinForm.addEventListener('submit', (e) => {
-      e.preventDefault();                // prevent page reload
-      const name = joinName.value.trim();
-      if (!name) return;
-      username = name;
-      showChat();
-    });
-
-    // Send message
-    form.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const text = input.value.trim();
-      if (!text || !username) return;
-      socket.emit('chat message', { user: username, text });
-      input.value = '';
-    });
-
-    // Leave chat
-    leaveBtn.addEventListener('click', () => {
-      showJoin();
-    });
-
-    // Optional: Remember last name locally
-    // (uncomment if you want persistence)
-    // username = localStorage.getItem('name') || '';
-    // if (username) { joinName.value = username; showChat(); }
-    // joinForm.addEventListener('submit', () => localStorage.setItem('name', username));
-  </script>
+  <script src="client.js"></script>
 </body>
 </html>
