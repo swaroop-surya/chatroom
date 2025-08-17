@@ -1,90 +1,121 @@
 const socket = io();
-const qs = s => document.querySelector(s);
-const nameInput = qs('#name');
-const setNameBtn = qs('#setName');
-const uploadForm = qs('#uploadForm');
-const fileInput = qs('#file');
-const filesEl = qs('#files');
 
-// Persist name locally
-const storedName = localStorage.getItem('ts:name') || '';
-nameInput.value = storedName;
-setNameBtn.addEventListener('click', () => {
-  localStorage.setItem('ts:name', nameInput.value.trim().slice(0,32) || 'Anonymous');
+// Screens
+const joinScreen = document.getElementById("joinScreen");
+const menuScreen = document.getElementById("menuScreen");
+const chatScreen = document.getElementById("chatScreen");
+
+const joinForm = document.getElementById("joinForm");
+const joinName = document.getElementById("joinName");
+
+const randomBtn = document.getElementById("randomBtn");
+const createBtn = document.getElementById("createBtn");
+const joinBtn = document.getElementById("joinBtn");
+
+const createForm = document.getElementById("createForm");
+const newRoomName = document.getElementById("newRoomName");
+const newRoomPass = document.getElementById("newRoomPass");
+const createRoomBtn = document.getElementById("createRoomBtn");
+
+const joinForm2 = document.getElementById("joinForm2");
+const roomList = document.getElementById("roomList");
+const joinPass = document.getElementById("joinPass");
+const joinRoomBtn = document.getElementById("joinRoomBtn");
+
+const roomTitle = document.getElementById("roomTitle");
+const messagesEl = document.getElementById("messages");
+const form = document.getElementById("form");
+const input = document.getElementById("input");
+const leaveBtn = document.getElementById("leaveBtn");
+
+let username = "";
+let currentRoom = "";
+
+function show(screen) {
+  [joinScreen, menuScreen, chatScreen].forEach(s => s.classList.remove("active"));
+  screen.classList.add("active");
+}
+
+// Join with name
+joinForm.addEventListener("submit", e => {
+  e.preventDefault();
+  username = joinName.value.trim();
+  if (!username) return;
+  show(menuScreen);
 });
 
-// Helpers
-const fmt = ts => new Date(ts).toLocaleString();
-function timeLeft(expiresAt) {
-  const ms = expiresAt - Date.now();
-  if (ms <= 0) return 'expired';
-  const h = Math.floor(ms/3600000);
-  const m = Math.floor((ms % 3600000)/60000);
-  const s = Math.floor((ms % 60000)/1000);
-  return `${h}h ${m}m ${s}s left`;
-}
-function escapeHtml(str){return (str||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));}
+// Random chat
+randomBtn.addEventListener("click", () => {
+  joinRoom("lobby", "");
+});
 
-// Render a file item
-function renderItem(meta, opts={prepend:false}) {
-  const li = document.createElement('li');
-  li.className = 'file-item';
-  li.dataset.id = meta.id;
-  li.innerHTML = `
-    <div class="file-head">
-      <span class="name">${escapeHtml(meta.user)}</span>
-      <span class="meta">• ${escapeHtml(meta.originalName)} • ${Math.ceil(meta.size/1024)} KB • ${fmt(meta.createdAt)}</span>
-      <span class="meta expires" data-exp="${meta.expiresAt}">• ${timeLeft(meta.expiresAt)}</span>
-      <span class="file-actions">
-        <a href="${meta.url}" target="_blank" rel="noopener">Open</a>
-        <a href="${meta.url}" download>Download</a>
-      </span>
-    </div>
-    <pre class="preview" data-url="${meta.url}">Loading preview…</pre>
-  `;
-  if (opts.prepend && filesEl.firstChild) filesEl.prepend(li); else filesEl.append(li);
-  // Load preview (limit ~100KB)
-  fetch(meta.url).then(r=>r.text()).then(t=>{
-    const pre = li.querySelector('.preview');
-    const max=100*1024;
-    pre.textContent = t.length>max ? (t.slice(0,max)+"\n… (truncated preview)") : t;
-  }).catch(()=>{
-    li.querySelector('.preview').textContent='(preview unavailable)';
+// Show create form
+createBtn.addEventListener("click", () => {
+  createForm.style.display = "block";
+  joinForm2.style.display = "none";
+});
+
+// Create room
+createRoomBtn.addEventListener("click", () => {
+  socket.emit("createRoom", { roomName: newRoomName.value, password: newRoomPass.value }, res => {
+    if (res.error) return alert(res.error);
+    joinRoom(res.roomId, newRoomPass.value);
+  });
+});
+
+// Show join form
+joinBtn.addEventListener("click", () => {
+  createForm.style.display = "none";
+  joinForm2.style.display = "block";
+  socket.emit("listRooms", rooms => {
+    roomList.innerHTML = "";
+    rooms.forEach(r => {
+      const opt = document.createElement("option");
+      opt.value = r.id;
+      opt.textContent = r.name;
+      roomList.appendChild(opt);
+    });
+  });
+});
+
+// Join room
+joinRoomBtn.addEventListener("click", () => {
+  joinRoom(roomList.value, joinPass.value);
+});
+
+function joinRoom(roomId, password) {
+  socket.emit("joinRoom", { roomId, password }, res => {
+    if (res.error) return alert(res.error);
+    currentRoom = roomId;
+    roomTitle.textContent = res.roomName;
+    messagesEl.innerHTML = "";
+    res.messages.forEach(addMessage);
+    show(chatScreen);
   });
 }
 
-function tick(){
-  document.querySelectorAll('.expires').forEach(el=>{
-    const exp = Number(el.getAttribute('data-exp'));
-    el.textContent = '• ' + timeLeft(exp);
-    if (exp <= Date.now()) el.closest('.file-item')?.remove();
-  });
-}
-setInterval(tick, 1000);
-
-// Initial list
-fetch('/files').then(r=>r.json()).then(list=>list.forEach(m=>renderItem(m)));
-
-// Realtime
-socket.on('file_uploaded', meta => renderItem(meta, { prepend: true }));
-socket.on('file_expired', ({ id }) => document.querySelector(`.file-item[data-id="${id}"]`)?.remove());
-
-// Upload handler
-uploadForm.addEventListener('submit', async (e) => {
+// Send chat
+form.addEventListener("submit", e => {
   e.preventDefault();
-  const f = fileInput.files[0];
-  if (!f) return alert('Choose a text file first');
-  const name = (nameInput.value || 'Anonymous').trim().slice(0,32) || 'Anonymous';
+  const text = input.value.trim();
+  if (!text) return;
+  socket.emit("chatMessage", { roomId: currentRoom, user: username, text });
+  input.value = "";
+});
 
-  const data = new FormData();
-  data.append('file', f);
-  data.append('user', name);
+// Render messages
+socket.on("chatMessage", addMessage);
+function addMessage(msg) {
+  const li = document.createElement("li");
+  const time = new Date(msg.timestamp).toLocaleTimeString();
+  li.textContent = `[${time}] ${msg.user}: ${msg.text}`;
+  messagesEl.appendChild(li);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
 
-  const res = await fetch('/upload', { method: 'POST', body: data });
-  if (!res.ok) {
-    const t = await res.text().catch(()=>'');
-    alert('Upload failed: ' + t);
-    return;
-  }
-  fileInput.value='';
+// Leave
+leaveBtn.addEventListener("click", () => {
+  show(menuScreen);
+  currentRoom = "";
+  messagesEl.innerHTML = "";
 });
