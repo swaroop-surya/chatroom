@@ -23,9 +23,9 @@
     #messages li { padding: 6px 10px; border-bottom: 1px solid #222; text-align: left; }
     .cards { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
     .card { border: 1px solid #fff; padding: 20px; cursor: pointer; }
-    #roomList { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; margin-top: 12px; }
+/*     #roomList { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; margin-top: 12px; }
     #roomList .card { min-width: 200px; text-align: center; }
-    #roomList .card.active { border-color: lime; background: #111; }
+    #roomList .card.active { border-color: lime; background: #111; } */
 
     /* Responsive adjustments */
     @media (max-width: 768px) {
@@ -69,11 +69,16 @@
     <!-- Join Room -->
     <div id="joinForm2" style="display:none; margin-top:20px;">
       <h3>Available Chatrooms</h3>
-      <div id="roomList" class="cards"></div>
-      <input id="joinPass" placeholder="Password"/>
+      
+      <!-- Dropdown instead of card grid -->
+      <select id="roomDropdown" style="background:#000; color:#fff; border:1px solid #fff; padding:10px; font-family:'Courier New', monospace; min-width:240px;">
+        <option value="">-- Select a room --</option>
+      </select>
+
+      <input id="joinPass" placeholder="Password" style="margin-top:10px;"/>
       <button id="joinRoomBtn">Join</button>
     </div>
-  </section>
+
 
   <!-- Chat Screen -->
   <section id="chatScreen">
