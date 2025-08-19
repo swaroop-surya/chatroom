@@ -82,12 +82,13 @@ socket.emit("listRooms", rooms => {
 
 // Join room
 joinRoomBtn.addEventListener("click", () => {
-  const selected = roomList.querySelector(".card.active");
-  if (!selected) {
-    alert("Select a room first");
-    return;
-  }
-  joinRoom(selected.dataset.id, joinPass.value);
+  const selected = roomDropdown.value;
+if (!selected) {
+  alert("Select a room first");
+  return;
+}
+joinRoom(selected, joinPass.value);
+
 });
 
 // Join room function
@@ -123,12 +124,12 @@ function addMessage(msg) {
 
 // Update users live
 socket.on("roomUsers", ({ roomId, count }) => {
-  document.querySelectorAll(`#roomList .card`).forEach(card => {
-    if (card.dataset.id === roomId) {
-      const base = card.textContent.split("(")[0].trim();
-      card.textContent = `${base} (${count} online)`;
-    }
-  });
+[...roomDropdown.options].forEach(opt => {
+  if (opt.value === roomId) {
+    const base = opt.textContent.split("(")[0].trim();
+    opt.textContent = `${base} (${count} online)`;
+  }
+});
 });
 
 // Leave
