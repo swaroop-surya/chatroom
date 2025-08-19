@@ -24,7 +24,6 @@
     .cards { display:flex; gap:20px; justify-content:center; flex-wrap:wrap; }
     .card { border:1px solid #fff; padding:20px; cursor:pointer; }
     .file-preview { display:none; border:1px solid #555; padding:6px; margin:6px 0; text-align:left;}
-    .game-bar { display:flex; gap:8px; flex-wrap:wrap; }
     @media (max-width:768px) {
       h1,h2 { font-size:1.4rem; }
       input,button,select { width:100%; font-size:.9rem; }
@@ -90,11 +89,6 @@
         <input id="input" placeholder="Type message..."/>
         <button id="send" type="submit">Send</button>
       </form>
-
-      <div class="game-bar">
-        <button id="startRPS">Play Rock–Paper–Scissors</button>
-        <button id="startTTT">Play Tic–Tac–Toe</button>
-      </div>
 
       <button id="leaveBtn">Leave Chatroom</button>
     </div>
