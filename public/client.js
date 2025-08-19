@@ -3,7 +3,6 @@ const socket = io(window.location.origin, {
 });
 
 
-const socket = io();
 
 // Screens
 const joinScreen = document.getElementById("joinScreen");
