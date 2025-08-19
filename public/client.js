@@ -18,7 +18,6 @@ const newRoomPass = document.getElementById("newRoomPass");
 const createRoomBtn = document.getElementById("createRoomBtn");
 
 const joinForm2 = document.getElementById("joinForm2");
-// CHANGED: use dropdown instead of roomList
 const roomDropdown = document.getElementById("roomDropdown");
 const joinPass = document.getElementById("joinPass");
 const joinRoomBtn = document.getElementById("joinRoomBtn");
@@ -60,7 +59,7 @@ createBtn.addEventListener("click", () => {
 createRoomBtn.addEventListener("click", () => {
   socket.emit("createRoom", { roomName: newRoomName.value, password: newRoomPass.value }, res => {
     if (res.error) return alert(res.error);
-    joinRoom(res.roomId, newRoomPass.value);
+    joinRoom(res.roomId, newRoomPass.value, newRoomName.value);
   });
 });
 
@@ -69,11 +68,11 @@ joinBtn.addEventListener("click", () => {
   createForm.style.display = "none";
   joinForm2.style.display = "block";
   socket.emit("listRooms", rooms => {
-    // CHANGED: populate dropdown
     roomDropdown.innerHTML = '<option value="">-- Select a room --</option>';
     rooms.forEach(r => {
       const opt = document.createElement("option");
       opt.value = r.id;
+      opt.dataset.name = r.name; // store room name
       opt.textContent = `${r.name} (${r.users} online)`;
       roomDropdown.appendChild(opt);
     });
@@ -82,22 +81,23 @@ joinBtn.addEventListener("click", () => {
 
 // Join room
 joinRoomBtn.addEventListener("click", () => {
-  const selected = roomDropdown.value; // CHANGED
-  if (!selected) {
+  const selectedOpt = roomDropdown.options[roomDropdown.selectedIndex];
+  if (!selectedOpt.value) {
     alert("Select a room first");
     return;
   }
-  joinRoom(selected, joinPass.value);
+  joinRoom(selectedOpt.value, joinPass.value, selectedOpt.dataset.name);
 });
 
 // Join room function
-function joinRoom(roomId, password) {
+function joinRoom(roomId, password, fallbackName = "") {
   socket.emit("joinRoom", { roomId, password, user: username }, res => {
     if (res.error) return alert(res.error);
     currentRoom = roomId;
-    roomTitle.textContent = res.roomName;
+    // Use server-provided roomName, otherwise fallback
+    roomTitle.textContent = res.roomName || fallbackName || "Chatroom";
     messagesEl.innerHTML = "";
-    res.messages.forEach(addMessage);
+    if (res.messages) res.messages.forEach(addMessage);
     show(chatScreen);
   });
 }
@@ -123,7 +123,6 @@ function addMessage(msg) {
 
 // Update users live
 socket.on("roomUsers", ({ roomId, count }) => {
-  // CHANGED: update dropdown option text instead of card
   [...roomDropdown.options].forEach(opt => {
     if (opt.value === roomId) {
       const base = opt.textContent.split("(")[0].trim();
