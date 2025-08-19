@@ -92,15 +92,30 @@ joinRoomBtn.addEventListener("click", () => {
 // Join room function
 function joinRoom(roomId, password, fallbackName = "") {
   socket.emit("joinRoom", { roomId, password, user: username }, res => {
-    if (res.error) return alert(res.error);
+    console.log("joinRoom response:", res); // DEBUG: see what server sends
+
+    if (!res || res.error) {
+      alert(res?.error || "Failed to join room");
+      return;
+    }
+
     currentRoom = roomId;
-    // Use server-provided roomName, otherwise fallback
-    roomTitle.textContent = res.roomName || fallbackName || "Chatroom";
+
+    // Use server-provided roomName OR fallback OR "Chatroom"
+    roomTitle.textContent = res.roomName || res.name || fallbackName || "Chatroom";
+
+    // Clear messages
     messagesEl.innerHTML = "";
-    if (res.messages) res.messages.forEach(addMessage);
+
+    // If server provided messages, render them safely
+    if (Array.isArray(res.messages)) {
+      res.messages.forEach(addMessage);
+    }
+
     show(chatScreen);
   });
 }
+
 
 // Send chat
 form.addEventListener("submit", e => {
