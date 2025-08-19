@@ -1,10 +1,6 @@
-const socket = io(window.location.origin, {
-  transports: ["websocket", "polling"]
-});
+// ------------- Elements
+const socket = io();
 
-
-
-// Screens
 const joinScreen = document.getElementById("joinScreen");
 const menuScreen = document.getElementById("menuScreen");
 const chatScreen = document.getElementById("chatScreen");
@@ -27,244 +23,287 @@ const joinPass = document.getElementById("joinPass");
 const joinRoomBtn = document.getElementById("joinRoomBtn");
 
 const roomTitle = document.getElementById("roomTitle");
-const messagesEl = document.getElementById("messages");
-const form = document.getElementById("form");
-const input = document.getElementById("input");
-const fileInput = document.getElementById("fileInput");
-const leaveBtn = document.getElementById("leaveBtn");
+const messages = document.getElementById("messages");
 const typingIndicator = document.getElementById("typingIndicator");
 
-let username = "";
-let currentRoom = "";
-let typingTimeout = null;
-const typingUsers = new Set();
+const fileInput = document.getElementById("fileInput");
+const filePreview = document.getElementById("filePreview");
 
+const form = document.getElementById("form");
+const input = document.getElementById("input");
+const leaveBtn = document.getElementById("leaveBtn");
+
+const startRPS = document.getElementById("startRPS");
+const startTTT = document.getElementById("startTTT");
+
+// ------------- State
+let username = "";
+let roomId = "";
+let selectedFile = null;
+
+// ------------- Helpers
 function show(screen) {
   [joinScreen, menuScreen, chatScreen].forEach(s => s.classList.remove("active"));
   screen.classList.add("active");
 }
+function clearMessages() { messages.innerHTML = ""; }
 
-// Join with name
-joinForm.addEventListener("submit", e => {
-  e.preventDefault();
-  username = joinName.value.trim();
-  if (!username) return;
-  show(menuScreen);
-});
+function addMessageToList(msg) {
+  const li = document.createElement("li");
+  li.dataset.id = msg.id;
+  if (msg.user === username && msg.type === "chat") li.classList.add("me");
 
-// Quick random join
-randomBtn.addEventListener("click", () => {
-  joinRoom("lobby", "");
-});
+  // header
+  const header = document.createElement("div");
+  const time = new Date(msg.timestamp).toLocaleTimeString();
+  header.textContent = `[${time}] ${msg.user}: ${msg.text || ""}`;
+  li.appendChild(header);
 
-// Show create form
-createBtn.addEventListener("click", () => {
-  createForm.style.display = "block";
-  joinForm2.style.display = "none";
-});
+  // file (link only)
+  if (msg.file) {
+    const line = document.createElement("div");
+    const a = document.createElement("a");
+    a.href = msg.file.url;
+    a.target = "_blank";
+    a.textContent = msg.file.originalName;
+    line.appendChild(a);
+    li.appendChild(line);
+  }
 
-// Create room
-createRoomBtn.addEventListener("click", () => {
-  socket.emit("createRoom", { roomName: newRoomName.value, password: newRoomPass.value }, res => {
-    if (!res || res.ok !== true) {
-      alert(res?.error || "Failed to create room");
-      return;
+  // delete button visible only for own normal messages
+  if (msg.type === "chat" && msg.user === username) {
+    const del = document.createElement("button");
+    del.textContent = "Delete";
+    del.style.marginLeft = "8px";
+    del.onclick = () => socket.emit("deleteMessage", { roomId, msgId: msg.id });
+    header.appendChild(del);
+  }
+
+  // render game blocks
+  if (msg.type === "game") {
+    if (msg.gameType === "rps") {
+      const g = document.createElement("div");
+      g.style.marginTop = "6px";
+      const state = msg.state;
+      g.innerHTML = `<div><strong>Rock–Paper–Scissors</strong></div>`;
+      const moveRow = document.createElement("div");
+      ["rock","paper","scissors"].forEach(m => {
+        const b = document.createElement("button");
+        b.textContent = m;
+        b.onclick = () => socket.emit("playMove", { roomId, msgId: msg.id, move: m });
+        moveRow.appendChild(b);
+      });
+      g.appendChild(moveRow);
+
+      const info = document.createElement("div");
+      info.className = "rps-info";
+      if (state.result) {
+        const { p1, m1, p2, m2, winner } = state.result;
+        info.textContent = `Results: ${p1} chose ${m1}, ${p2} chose ${m2}. Winner: ${winner === "draw" ? "Draw" : winner}`;
+      } else {
+        const players = Object.keys(state.moves);
+        info.textContent = `Moves received: ${players.length} / 2`;
+      }
+      g.appendChild(info);
+      li.appendChild(g);
     }
-    joinRoom(res.roomId, newRoomPass.value, res.roomName || newRoomName.value);
-  });
-});
 
-// Show join form + populate dropdown
-joinBtn.addEventListener("click", () => {
-  createForm.style.display = "none";
-  joinForm2.style.display = "block";
+    if (msg.gameType === "ttt") {
+      const g = document.createElement("div");
+      g.style.marginTop = "6px";
+      const state = msg.state;
 
-  socket.emit("listRooms", rooms => {
-    roomDropdown.innerHTML = '<option value="">-- Select a room --</option>';
+      const board = document.createElement("div");
+      board.style.display = "grid";
+      board.style.gridTemplateColumns = "repeat(3, 44px)";
+      board.style.gap = "4px";
+
+      for (let i = 0; i < 9; i++) {
+        const b = document.createElement("button");
+        b.textContent = state.board[i] || " ";
+        b.style.width = "44px";
+        b.style.height = "44px";
+        b.onclick = () => socket.emit("playMove", { roomId, msgId: msg.id, move: i });
+        board.appendChild(b);
+      }
+
+      const info = document.createElement("div");
+      if (state.result === "draw") info.textContent = "Game over: Draw";
+      else if (state.result) info.textContent = `Game over: ${state.winner} wins`;
+      else info.textContent = `Turn: ${state.turn}`;
+
+      g.appendChild(board);
+      g.appendChild(info);
+      li.appendChild(g);
+    }
+  }
+
+  messages.appendChild(li);
+  messages.scrollTop = messages.scrollHeight;
+}
+
+function rerenderGameMessage(msgId, newState) {
+  const li = messages.querySelector(`li[data-id="${msgId}"]`);
+  if (!li) return;
+  // replace whole node for simplicity (re-render from cached msg object if any)
+  // Find original type
+  // We’ll just update dynamic bits inside li:
+  const info = li.querySelector(".rps-info");
+  if (info && newState.result) {
+    const { p1, m1, p2, m2, winner } = newState.result;
+    info.textContent = `Results: ${p1} chose ${m1}, ${p2} chose ${m2}. Winner: ${winner === "draw" ? "Draw" : winner}`;
+  }
+  if (!info && li.innerHTML.includes("Rock–Paper–Scissors")) {
+    // moves count area (if not resolved)
+    const area = li.querySelector("div div:last-child");
+    if (area) {
+      const players = Object.keys(newState.moves || {});
+      area.textContent = `Moves received: ${players.length} / 2`;
+    }
+  }
+  if (li.innerHTML.includes("Tic–Tac–Toe")) {
+    const buttons = li.querySelectorAll("button");
+    newState.board.forEach((v, i) => {
+      if (buttons[i]) buttons[i].textContent = v || " ";
+    });
+    const infos = li.querySelectorAll("div");
+    const infoNode = infos[infos.length - 1];
+    if (newState.result === "draw") infoNode.textContent = "Game over: Draw";
+    else if (newState.result) infoNode.textContent = `Game over: ${newState.winner} wins`;
+    else infoNode.textContent = `Turn: ${newState.turn}`;
+  }
+}
+
+// ------------- Join & Menu
+joinForm.addEventListener("submit", (e) => {
+  e.preventDefault();
+  username = joinName.value.trim() || "Anonymous";
+  show(menuScreen);
+  socket.emit("listRooms", (rooms) => {
+    roomDropdown.innerHTML = `<option value="">-- Select a room --</option>`;
     rooms.forEach(r => {
       const opt = document.createElement("option");
       opt.value = r.id;
-      opt.dataset.name = r.name;
       opt.textContent = `${r.name} (${r.users} online)`;
       roomDropdown.appendChild(opt);
     });
   });
 });
 
-// Join room using selected option
-joinRoomBtn.addEventListener("click", () => {
-  const selectedOpt = roomDropdown.options[roomDropdown.selectedIndex];
-  if (!selectedOpt || !selectedOpt.value) {
-    alert("Select a room first");
-    return;
-  }
-  joinRoom(selectedOpt.value, joinPass.value, selectedOpt.dataset.name);
-});
+randomBtn.onclick = () => joinRoom("lobby", "");
+createBtn.onclick = () => {
+  createForm.style.display = "block";
+  joinForm2.style.display = "none";
+};
+joinBtn.onclick = () => {
+  joinForm2.style.display = "block";
+  createForm.style.display = "none";
+};
 
-// Core join function
-function joinRoom(roomId, password, fallbackName = "") {
-  socket.emit("joinRoom", { roomId, password, user: username }, res => {
-    console.log("joinRoom response:", res);
+createRoomBtn.onclick = () => {
+  const name = newRoomName.value.trim();
+  const pass = newRoomPass.value.trim();
+  if (!name) return;
+  socket.emit("createRoom", { roomName: name, password: pass }, (res) => {
+    if (res.ok) joinRoom(res.roomId, pass);
+    else alert(res.error || "Failed to create room");
+  });
+};
 
-    if (!res || res.ok !== true) {
-      alert(res?.error || "Failed to join room");
-      return;
-    }
+joinRoomBtn.onclick = () => {
+  const rid = roomDropdown.value;
+  const pass = joinPass.value.trim();
+  if (!rid) return alert("Choose a room");
+  joinRoom(rid, pass);
+};
 
-    currentRoom = roomId;
-    roomTitle.textContent = res.roomName || fallbackName || "Chatroom";
-
-    // Reset messages and render any history
-    messagesEl.innerHTML = "";
-    if (Array.isArray(res.messages)) {
-      res.messages.forEach(addMessage);
-    }
-
-    // Reset typing state on join
-    typingUsers.clear();
-    updateTypingIndicator();
-
+function joinRoom(rid, pass) {
+  socket.emit("joinRoom", { roomId: rid, password: pass, user: username }, (res) => {
+    if (!res.ok) return alert(res.error || "Failed to join");
+    roomId = rid;
+    roomTitle.textContent = res.roomName;
+    clearMessages();
+    res.messages.forEach(addMessageToList);
     show(chatScreen);
   });
 }
 
-// Send message (with optional file)
+// ------------- Chat + File Preview
+fileInput.addEventListener("change", () => {
+  if (!fileInput.files.length) return;
+  selectedFile = fileInput.files[0];
+  filePreview.textContent = `Selected: ${selectedFile.name} (${Math.round(selectedFile.size / 1024)} KB)  [click to clear]`;
+  filePreview.style.display = "block";
+});
+filePreview.addEventListener("click", () => {
+  selectedFile = null;
+  fileInput.value = "";
+  filePreview.style.display = "none";
+});
+
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
-  const text = input.value.trim();
-  const file = fileInput.files[0];
+  if (!roomId) return;
 
-  let fileMeta = null;
+  let text = input.value.trim();
+  let fileData = null;
 
-  if (file) {
+  if (selectedFile) {
     const data = new FormData();
-    data.append("file", file);
-    try {
-      const r = await fetch("/upload", { method: "POST", body: data });
-      const json = await r.json();
-      if (json.ok) {
-        fileMeta = json.file; // {url, originalName, mime, size}
-      } else {
-        alert(json.error || "File upload failed");
-      }
-    } catch (err) {
-      alert("Upload error");
-    }
+    data.append("file", selectedFile);
+    const resp = await fetch("/upload", { method: "POST", body: data });
+    const json = await resp.json();
+    if (json.ok) fileData = json.file;
+    // reset preview
+    selectedFile = null;
+    fileInput.value = "";
+    filePreview.style.display = "none";
   }
 
-  if (!text && !fileMeta) return;
-
-  socket.emit("chatMessage", { roomId: currentRoom, user: username, text, file: fileMeta });
+  if (text || fileData) {
+    socket.emit("chatMessage", { roomId, user: username, text, file: fileData });
+  }
   input.value = "";
-  fileInput.value = "";
-  emitTyping(false);
 });
-
-// Incoming messages
-socket.on("chatMessage", addMessage);
-
-function addMessage(msg) {
-  const li = document.createElement("li");
-  const me = msg.user === username;
-  if (me) li.classList.add("me");
-
-  const ts = msg.timestamp ? new Date(msg.timestamp) : new Date();
-  const time = ts.toLocaleTimeString();
-  const who = msg.user || "Anonymous";
-  const text = msg.text || "";
-
-  // text
-  const txt = document.createElement("div");
-  txt.textContent = `[${time}] ${who}: ${text}`;
-  li.appendChild(txt);
-
-  // file (image or txt)
-  if (msg.file && msg.file.url) {
-    const box = document.createElement("div");
-    box.className = "msg-file";
-
-    if (msg.file.mime && msg.file.mime.startsWith("image/")) {
-      const img = document.createElement("img");
-      img.src = msg.file.url;
-      img.alt = msg.file.originalName || "image";
-      box.appendChild(img);
-    } else if (msg.file.mime === "text/plain") {
-      const pre = document.createElement("pre");
-      pre.style.maxHeight = "200px";
-      pre.style.overflow = "auto";
-      pre.style.whiteSpace = "pre-wrap";
-      fetch(msg.file.url)
-        .then(r => r.text())
-        .then(t => pre.textContent = t)
-        .catch(() => pre.textContent = "(failed to load text)");
-      box.appendChild(pre);
-    } else {
-      const a = document.createElement("a");
-      a.href = msg.file.url;
-      a.target = "_blank";
-      a.rel = "noreferrer";
-      a.textContent = msg.file.originalName || "download file";
-      box.appendChild(a);
-    }
-
-    li.appendChild(box);
-  }
-
-  messagesEl.appendChild(li);
-  messagesEl.scrollTop = messagesEl.scrollHeight;
-}
-
-// Live user count updates
-socket.on("roomUsers", ({ roomId, count }) => {
-  [...roomDropdown.options].forEach(opt => {
-    if (opt.value === roomId) {
-      const base = opt.textContent.split("(")[0].trim();
-      opt.textContent = `${base} (${count} online)`;
-    }
-  });
-});
-
-// Typing indicator logic
-function updateTypingIndicator() {
-  const arr = [...typingUsers].filter(name => name !== username);
-  if (arr.length === 0) {
-    typingIndicator.textContent = "";
-    return;
-  }
-  if (arr.length === 1) {
-    typingIndicator.textContent = `✍️ ${arr[0]} is typing...`;
-  } else if (arr.length === 2) {
-    typingIndicator.textContent = `✍️ ${arr[0]} and ${arr[1]} are typing...`;
-  } else {
-    typingIndicator.textContent = `✍️ ${arr[0]}, ${arr[1]} and ${arr.length - 2} others are typing...`;
-  }
-}
-
-function emitTyping(state) {
-  if (!currentRoom) return;
-  socket.emit("typing", { roomId: currentRoom, typing: !!state });
-}
 
 input.addEventListener("input", () => {
-  emitTyping(true);
-  if (typingTimeout) clearTimeout(typingTimeout);
-  typingTimeout = setTimeout(() => emitTyping(false), 1500);
+  socket.emit("typing", { roomId, typing: input.value.length > 0 });
 });
 
+// ------------- Socket events
+socket.on("chatMessage", (msg) => addMessageToList(msg));
+socket.on("messageDeleted", ({ msgId }) => {
+  const li = messages.querySelector(`li[data-id="${msgId}"]`);
+  if (li) li.remove();
+});
 socket.on("typing", ({ user, typing }) => {
-  if (!user) return;
-  if (typing) typingUsers.add(user);
-  else typingUsers.delete(user);
-  // Remove after grace period to avoid sticky indicators
-  setTimeout(() => { typingUsers.delete(user); updateTypingIndicator(); }, 3000);
-  updateTypingIndicator();
+  typingIndicator.textContent = typing ? `${user} is typing...` : "";
+});
+socket.on("gameUpdated", ({ msgId, state }) => {
+  rerenderGameMessage(msgId, state);
 });
 
-// Leave room (client-side view reset)
-leaveBtn.addEventListener("click", () => {
+// ------------- Games
+startRPS.onclick = () => {
+  if (!roomId) return;
+  socket.emit("startGame", { roomId, gameType: "rps" });
+};
+startTTT.onclick = () => {
+  if (!roomId) return;
+  socket.emit("startGame", { roomId, gameType: "ttt" });
+};
+
+// ------------- Leave
+leaveBtn.onclick = () => {
+  roomId = "";
   show(menuScreen);
-  currentRoom = "";
-  messagesEl.innerHTML = "";
-  typingUsers.clear();
-  updateTypingIndicator();
-});
+  socket.emit("listRooms", (rooms) => {
+    roomDropdown.innerHTML = `<option value="">-- Select a room --</option>`;
+    rooms.forEach(r => {
+      const opt = document.createElement("option");
+      opt.value = r.id;
+      opt.textContent = `${r.name} (${r.users} online)`;
+      roomDropdown.appendChild(opt);
+    });
+  });
+};
