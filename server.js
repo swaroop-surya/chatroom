@@ -19,7 +19,9 @@ const io = new Server(server, {
   cors: { origin: "*" }
 });
 
+// --- Middleware
 app.use(cors());
+// If helmet causes CSP issues on free hosting, comment the next line out
 app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
 app.use(compression());
 app.use(express.json());
@@ -83,9 +85,7 @@ setInterval(() => {
 }, 60_000);
 
 // --- In-memory rooms & messages
-// room structure: { id, name, password, users:Set<socket.id>, messages:[{user,text,file?,timestamp}] }
 const rooms = new Map();
-
 function ensureLobby() {
   if (![...rooms.values()].some(r => r.name === "Random Group Chat")) {
     const id = "lobby";
@@ -157,10 +157,9 @@ io.on("connection", (socket) => {
     const msg = {
       user: socket.data.username || user || "Anonymous",
       text: String(text || ""),
-      file: file || null, // {url, originalName, mime, size}
+      file: file || null,
       timestamp: Date.now()
     };
-    // Keep only last 500 messages per room
     room.messages.push(msg);
     if (room.messages.length > 500) room.messages.shift();
     io.to(roomId).emit("chatMessage", msg);
