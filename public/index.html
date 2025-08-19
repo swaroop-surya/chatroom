@@ -2,17 +2,27 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Chatroom</title>
+  <title>Chat + Funrooms</title>
   <link href="slogow.png" rel="icon" type="image/png"/>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root { color-scheme: dark; }
     body { font-family: "Courier New", monospace; background:#000; color:#fff; margin:0; }
-    section { display:none; height:100vh; padding:24px; box-sizing:border-box; align-items:center; justify-content:center; text-align:center; }
-    .active { display:flex !important; flex-direction:column; gap:12px; }
+    section { display:none; min-height:100vh; padding:16px; box-sizing:border-box; }
+    .active { display:block !important; }
     input, button, select { font-family:inherit; background:#000; color:#fff; border:1px solid #fff; padding:10px 12px; }
     button { cursor:pointer; }
-    #chat { width:min(92vw, 820px); border:1px solid #fff; padding:12px; display:flex; flex-direction:column; height:min(80vh,760px); margin:auto; gap:10px; }
+    .cards { display:flex; gap:12px; flex-wrap:wrap; justify-content:center; margin:16px 0; }
+    .card { border:1px solid #fff; padding:14px 18px; cursor:pointer; }
+
+    /* Layout: game on top, chat below */
+    #gameArea { max-width: 980px; margin: 0 auto; display:flex; flex-direction:column; gap:12px; }
+    #gameHeader { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    #gameInfo { display:flex; gap:16px; align-items:center; flex-wrap:wrap; }
+    #canvasWrap { display:flex; justify-content:center; }
+    canvas { image-rendering: pixelated; border:1px solid #444; background:#111; }
+
+    #chat { width:100%; border:1px solid #fff; padding:12px; display:flex; flex-direction:column; min-height:340px; gap:10px; }
     #messages { list-style:none; padding:0; margin:0; flex:1; overflow-y:auto; border:1px solid #333; }
     #messages li { padding:8px 10px; border-bottom:1px solid #222; text-align:left; }
     #messages li.me { text-align:right; }
@@ -20,24 +30,17 @@
     .toolbar { display:flex; gap:8px; align-items:center; }
     .toolbar input[type="file"] { display:none; }
     .file-label { border:1px solid #fff; padding:8px 10px; cursor:pointer; }
-    .hint { opacity:.7; font-size:.85rem; }
-    .cards { display:flex; gap:20px; justify-content:center; flex-wrap:wrap; }
-    .card { border:1px solid #fff; padding:20px; cursor:pointer; }
-    .file-preview { display:none; border:1px solid #555; padding:6px; margin:6px 0; text-align:left;}
+
     @media (max-width:768px) {
-      h1,h2 { font-size:1.4rem; }
-      input,button,select { width:100%; font-size:.9rem; }
-      #chat { width:100%; height:100vh; border:none; border-radius:0; padding:8px; }
-      #messages { flex:1; font-size:.95rem; }
-      #form { flex-direction:column; gap:6px; align-items:stretch; }
-      #leaveBtn { width:100%; margin-top:4px; }
+      input,button,select { width:100%; font-size:.95rem; }
+      #gameHeader { flex-direction:column; align-items:flex-start; gap:8px; }
     }
   </style>
 </head>
 <body>
   <!-- Join -->
   <section id="joinScreen" class="active">
-    <h1>Join Chatroom</h1>
+    <h1>Join</h1>
     <form id="joinForm">
       <input id="joinName" placeholder="Enter your name" required />
       <button type="submit">Enter</button>
@@ -46,20 +49,24 @@
 
   <!-- Menu -->
   <section id="menuScreen">
-    <h1>Choose Chatroom</h1>
+    <h1>Choose</h1>
     <div class="cards">
       <div class="card" id="randomBtn">Random Group Chat</div>
       <div class="card" id="createBtn">Create Chatroom</div>
       <div class="card" id="joinBtn">Join Chatroom</div>
+      <div class="card" id="createFunBtn">Create Funroom</div>
+      <div class="card" id="joinFunBtn">Join Funroom</div>
     </div>
 
-    <div id="createForm" style="display:none; margin-top:20px;">
+    <!-- Create Chat -->
+    <div id="createForm" style="display:none; margin-top:16px;">
       <input id="newRoomName" placeholder="Room name"/>
       <input id="newRoomPass" placeholder="Password"/>
       <button id="createRoomBtn">Create</button>
     </div>
 
-    <div id="joinForm2" style="display:none; margin-top:20px;">
+    <!-- Join Chat -->
+    <div id="joinForm2" style="display:none; margin-top:16px;">
       <h3>Available Chatrooms</h3>
       <select id="roomDropdown" style="min-width:240px;">
         <option value="">-- Select a room --</option>
@@ -67,32 +74,83 @@
       <input id="joinPass" placeholder="Password" style="margin-top:10px;"/>
       <button id="joinRoomBtn">Join</button>
     </div>
-  </section>
 
-  <!-- Chat -->
-  <section id="chatScreen">
-    <div id="chat">
-      <h2 id="roomTitle"></h2>
+    <!-- Create Funroom -->
+    <div id="createFunForm" style="display:none; margin-top:16px;">
+      <h3>Create Funroom</h3>
+      <input id="newFunName" placeholder="Funroom name"/>
+      <input id="newFunPass" placeholder="Password (optional)"/>
+      <label>
+        Fun Mode:
+        <select id="funMode">
+          <option value="snake">Snake</option>
+        </select>
+      </label>
+      <label style="margin-left:12px;">
+        <input type="checkbox" id="timer60"/> 60s Timer
+      </label>
+      <button id="createFunroomBtn">Create</button>
+    </div>
 
-      <div class="toolbar">
-        <label class="file-label" for="fileInput">Attach file</label>
-        <input id="fileInput" type="file" accept="image/*,.txt"/>
-        <span class="hint">Allowed: images & .txt (≤ 8 MB)</span>
-      </div>
-
-      <div id="filePreview" class="file-preview"></div>
-
-      <ul id="messages"></ul>
-      <div class="typing" id="typingIndicator"></div>
-
-      <form id="form">
-        <input id="input" placeholder="Type message..."/>
-        <button id="send" type="submit">Send</button>
-      </form>
-
-      <button id="leaveBtn">Leave Chatroom</button>
+    <!-- Join Funroom -->
+    <div id="joinFunForm" style="display:none; margin-top:16px;">
+      <h3>Join Funroom (shows rooms with exactly one player)</h3>
+      <select id="funDropdown" style="min-width:240px;">
+        <option value="">-- Select a funroom --</option>
+      </select>
+      <input id="joinFunPass" placeholder="Password (if any)" style="margin-top:10px;"/>
+      <button id="joinFunroomBtn">Join</button>
     </div>
   </section>
+
+  <!-- Funroom (Game + Chat) -->
+  <section id="funScreen">
+    <div id="gameArea">
+      <div id="gameHeader">
+        <div id="gameInfo">
+          <strong id="roomTitle"></strong>
+          <span id="roleBadge"></span>
+          <span id="scoreP1"></span>
+          <span id="scoreP2"></span>
+          <span id="timerLabel"></span>
+          <span id="spectators"></span>
+        </div>
+        <div>
+          <button id="playAgainBtn">Play Again</button>
+          <label style="margin-left:8px;">
+            <input type="checkbox" id="timer60Replay"/> 60s Timer
+          </label>
+          <button id="leaveFunBtn" style="margin-left:8px;">Leave</button>
+        </div>
+      </div>
+
+      <div id="canvasWrap">
+        <canvas id="board" width="720" height="480"></canvas>
+      </div>
+
+      <!-- Chat below the game -->
+      <div id="chat">
+        <div class="toolbar">
+          <label class="file-label" for="fileInput">Attach file</label>
+          <input id="fileInput" type="file" accept="image/*,.txt"/>
+          <span class="hint">Allowed: images & .txt (≤ 8 MB)</span>
+        </div>
+
+        <div id="filePreview" class="file-preview" style="display:none; border:1px solid #555; padding:6px; margin:6px 0; text-align:left;"></div>
+
+        <ul id="messages"></ul>
+        <div class="typing" id="typingIndicator"></div>
+
+        <form id="form">
+          <input id="input" placeholder="Type message..."/>
+          <button id="send" type="submit">Send</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- Normal chat screen (kept for backward-compat, not used in funroom) -->
+  <section id="chatScreen" style="display:none;"></section>
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="client.js"></script>
