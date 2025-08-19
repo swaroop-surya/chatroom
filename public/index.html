@@ -7,45 +7,36 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     :root { color-scheme: dark; }
-    body {
-      font-family: "Courier New", monospace;
-      background: #000;
-      color: #fff;
-      margin: 0;
-    }
-    section { display: none; height: 100vh; padding: 24px; box-sizing: border-box;
-      align-items: center; justify-content: center; text-align: center; }
-    .active { display: flex !important; flex-direction: column; gap: 12px; }
-    input, button, select {
-      font-family: inherit; background: #000; color: #fff;
-      border: 1px solid #fff; padding: 10px 12px;
-    }
-    button { cursor: pointer; }
-    #chat { width: min(92vw, 820px); border: 1px solid #fff; padding: 12px; display: flex; flex-direction: column; height: min(80vh, 760px); margin: auto; gap: 10px; }
-    #messages { list-style: none; padding: 0; margin: 0; flex: 1; overflow-y: auto; border: 1px solid #333; }
-    #messages li { padding: 8px 10px; border-bottom: 1px solid #222; text-align: left; }
-    #messages li.me { text-align: right; }
-    .msg-file { display: inline-block; border: 1px dashed #666; padding: 6px; margin-top: 6px; max-width: 100%; }
-    .msg-file img { max-width: 100%; height: auto; display: block; }
-    .typing { opacity: 0.8; font-size: 0.9rem; min-height: 1.2em; text-align: left; }
-    .toolbar { display: flex; gap: 8px; align-items: center; }
-    .toolbar input[type="file"] { display: none; }
-    .file-label { border: 1px solid #fff; padding: 8px 10px; cursor: pointer; }
-    .hint { opacity: 0.7; font-size: 0.85rem; }
-
-    @media (max-width: 768px) {
-      h1, h2 { font-size: 1.4rem; }
-      input, button, select { width: 100%; font-size: 0.9rem; }
-      #chat { width: 100%; height: 100vh; border: none; border-radius: 0; padding: 8px; }
-      #messages { flex: 1; font-size: 0.95rem; }
-      #form { flex-direction: column; gap: 6px; align-items: stretch; }
-      #input { flex: 1; }
-      #leaveBtn { width: 100%; margin-top: 4px; }
+    body { font-family: "Courier New", monospace; background:#000; color:#fff; margin:0; }
+    section { display:none; height:100vh; padding:24px; box-sizing:border-box; align-items:center; justify-content:center; text-align:center; }
+    .active { display:flex !important; flex-direction:column; gap:12px; }
+    input, button, select { font-family:inherit; background:#000; color:#fff; border:1px solid #fff; padding:10px 12px; }
+    button { cursor:pointer; }
+    #chat { width:min(92vw, 820px); border:1px solid #fff; padding:12px; display:flex; flex-direction:column; height:min(80vh,760px); margin:auto; gap:10px; }
+    #messages { list-style:none; padding:0; margin:0; flex:1; overflow-y:auto; border:1px solid #333; }
+    #messages li { padding:8px 10px; border-bottom:1px solid #222; text-align:left; }
+    #messages li.me { text-align:right; }
+    .typing { opacity:.8; font-size:.9rem; min-height:1.2em; text-align:left; }
+    .toolbar { display:flex; gap:8px; align-items:center; }
+    .toolbar input[type="file"] { display:none; }
+    .file-label { border:1px solid #fff; padding:8px 10px; cursor:pointer; }
+    .hint { opacity:.7; font-size:.85rem; }
+    .cards { display:flex; gap:20px; justify-content:center; flex-wrap:wrap; }
+    .card { border:1px solid #fff; padding:20px; cursor:pointer; }
+    .file-preview { display:none; border:1px solid #555; padding:6px; margin:6px 0; text-align:left;}
+    .game-bar { display:flex; gap:8px; flex-wrap:wrap; }
+    @media (max-width:768px) {
+      h1,h2 { font-size:1.4rem; }
+      input,button,select { width:100%; font-size:.9rem; }
+      #chat { width:100%; height:100vh; border:none; border-radius:0; padding:8px; }
+      #messages { flex:1; font-size:.95rem; }
+      #form { flex-direction:column; gap:6px; align-items:stretch; }
+      #leaveBtn { width:100%; margin-top:4px; }
     }
   </style>
 </head>
 <body>
-  <!-- Join Screen -->
+  <!-- Join -->
   <section id="joinScreen" class="active">
     <h1>Join Chatroom</h1>
     <form id="joinForm">
@@ -54,21 +45,21 @@
     </form>
   </section>
 
-  <!-- Menu Screen -->
+  <!-- Menu -->
   <section id="menuScreen">
     <h1>Choose Chatroom</h1>
-    <div class="cards" style="display:flex; gap:20px; justify-content:center; flex-wrap:wrap;">
-      <div class="card" id="randomBtn" style="border:1px solid #fff; padding:20px; cursor:pointer;">Random Group Chat</div>
-      <div class="card" id="createBtn" style="border:1px solid #fff; padding:20px; cursor:pointer;">Create Chatroom</div>
-      <div class="card" id="joinBtn" style="border:1px solid #fff; padding:20px; cursor:pointer;">Join Chatroom</div>
+    <div class="cards">
+      <div class="card" id="randomBtn">Random Group Chat</div>
+      <div class="card" id="createBtn">Create Chatroom</div>
+      <div class="card" id="joinBtn">Join Chatroom</div>
     </div>
-    <!-- Create Room -->
+
     <div id="createForm" style="display:none; margin-top:20px;">
       <input id="newRoomName" placeholder="Room name"/>
       <input id="newRoomPass" placeholder="Password"/>
       <button id="createRoomBtn">Create</button>
     </div>
-    <!-- Join Room -->
+
     <div id="joinForm2" style="display:none; margin-top:20px;">
       <h3>Available Chatrooms</h3>
       <select id="roomDropdown" style="min-width:240px;">
@@ -79,30 +70,37 @@
     </div>
   </section>
 
-  <!-- Chat Screen -->
+  <!-- Chat -->
   <section id="chatScreen">
     <div id="chat">
       <h2 id="roomTitle"></h2>
 
       <div class="toolbar">
         <label class="file-label" for="fileInput">Attach file</label>
-        <input id="fileInput" type="file" accept="image/*,.txt" />
+        <input id="fileInput" type="file" accept="image/*,.txt"/>
         <span class="hint">Allowed: images & .txt (≤ 8 MB)</span>
       </div>
 
-      <ul id="messages"></ul>
+      <div id="filePreview" class="file-preview"></div>
 
+      <ul id="messages"></ul>
       <div class="typing" id="typingIndicator"></div>
 
       <form id="form">
         <input id="input" placeholder="Type message..."/>
         <button id="send" type="submit">Send</button>
       </form>
+
+      <div class="game-bar">
+        <button id="startRPS">Play Rock–Paper–Scissors</button>
+        <button id="startTTT">Play Tic–Tac–Toe</button>
+      </div>
+
       <button id="leaveBtn">Leave Chatroom</button>
     </div>
   </section>
 
-<script src="/socket.io/socket.io.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
   <script src="client.js"></script>
 </body>
 </html>
