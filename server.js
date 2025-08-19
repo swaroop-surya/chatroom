@@ -80,7 +80,7 @@ setInterval(() => {
 }, 60_000);
 
 // ---- Rooms + Messages
-// message: { id, type:'chat'|'game', user, senderId, text?, file?, timestamp, ...game }
+// message: { id, type:'chat', user, senderId, text?, file?, timestamp }
 const rooms = new Map();
 function ensureLobby() {
   if (![...rooms.values()].some(r => r.name === "Random Group Chat")) {
@@ -89,19 +89,6 @@ function ensureLobby() {
   }
 }
 ensureLobby();
-
-// helpers for TicTacToe
-function tttWinner(board) {
-  const lines = [
-    [0,1,2],[3,4,5],[6,7,8],
-    [0,3,6],[1,4,7],[2,5,8],
-    [0,4,8],[2,4,6]
-  ];
-  for (const [a,b,c] of lines) {
-    if (board[a] && board[a] === board[b] && board[a] === board[c]) return board[a];
-  }
-  return null;
-}
 
 io.on("connection", (socket) => {
   socket.data.username = "";
@@ -176,110 +163,6 @@ io.on("connection", (socket) => {
   socket.on("typing", ({ roomId, typing }) => {
     const name = socket.data.username || "Someone";
     socket.to(roomId).emit("typing", { user: name, typing: !!typing });
-  });
-
-  // --- Games ---
-  socket.on("startGame", ({ roomId, gameType }) => {
-    const room = rooms.get(roomId);
-    if (!room) return;
-
-    if (gameType === "rps") {
-      const msg = {
-        id: uuidv4(),
-        type: "game",
-        gameType: "rps",
-        user: socket.data.username,
-        senderId: socket.id,
-        timestamp: Date.now(),
-        state: { moves: {}, players: [], result: null } // moves[user] = 'rock'|'paper'|'scissors'
-      };
-      room.messages.push(msg);
-      io.to(roomId).emit("chatMessage", msg);
-      return;
-    }
-
-    if (gameType === "ttt") {
-      const msg = {
-        id: uuidv4(),
-        type: "game",
-        gameType: "ttt",
-        user: socket.data.username,
-        senderId: socket.id,
-        timestamp: Date.now(),
-        state: {
-          board: Array(9).fill(null),          // 'X' or 'O'
-          players: [],                          // [userX, userO]
-          marks: {},                            // username -> 'X'|'O'
-          turn: 'X',
-          result: null,                         // 'X'|'O'|'draw'|null
-          winner: null
-        }
-      };
-      room.messages.push(msg);
-      io.to(roomId).emit("chatMessage", msg);
-      return;
-    }
-  });
-
-  socket.on("playMove", ({ roomId, msgId, move }) => {
-    const room = rooms.get(roomId);
-    if (!room) return;
-    const msg = room.messages.find(m => m.id === msgId && m.type === "game");
-    if (!msg) return;
-
-    // Rock–Paper–Scissors
-    if (msg.gameType === "rps") {
-      if (msg.state.result) return; // already resolved
-      const user = socket.data.username;
-      if (!msg.state.players.includes(user)) msg.state.players.push(user);
-      if (msg.state.players.length > 2 && !msg.state.players.includes(user)) return;
-      if (["rock","paper","scissors"].includes(move)) {
-        msg.state.moves[user] = move;
-      }
-      if (Object.keys(msg.state.moves).length >= 2) {
-        const [p1, p2] = Object.keys(msg.state.moves);
-        const m1 = msg.state.moves[p1], m2 = msg.state.moves[p2];
-        let winner = "draw";
-        if ((m1==="rock"&&m2==="scissors")||(m1==="scissors"&&m2==="paper")||(m1==="paper"&&m2==="rock")) winner = p1;
-        else if (m1!==m2) winner = p2;
-        msg.state.result = { p1, m1, p2, m2, winner };
-      }
-      io.to(roomId).emit("gameUpdated", { msgId, state: msg.state });
-      return;
-    }
-
-    // Tic–Tac–Toe
-    if (msg.gameType === "ttt") {
-      if (msg.state.result) return;
-      const user = socket.data.username;
-
-      // allocate mark
-      if (!msg.state.marks[user]) {
-        if (msg.state.players.length >= 2 && !msg.state.players.includes(user)) return;
-        const mark = msg.state.players.length === 0 ? 'X' : 'O';
-        msg.state.players.push(user);
-        msg.state.marks[user] = mark;
-      }
-
-      const mark = msg.state.marks[user];
-      if (mark !== msg.state.turn) return;
-      const idx = Number(move);
-      if (!(idx >= 0 && idx < 9)) return;
-      if (msg.state.board[idx] !== null) return;
-
-      msg.state.board[idx] = mark;
-      const w = tttWinner(msg.state.board);
-      if (w) {
-        msg.state.result = w;
-        msg.state.winner = w;
-      } else if (msg.state.board.every(c => c !== null)) {
-        msg.state.result = "draw";
-      } else {
-        msg.state.turn = mark === 'X' ? 'O' : 'X';
-      }
-      io.to(roomId).emit("gameUpdated", { msgId, state: msg.state });
-      return;
-    }
   });
 
   socket.on("disconnect", () => {
