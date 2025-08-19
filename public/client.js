@@ -1,6 +1,6 @@
-// ------------- Elements
 const socket = io();
 
+// Elements
 const joinScreen = document.getElementById("joinScreen");
 const menuScreen = document.getElementById("menuScreen");
 const chatScreen = document.getElementById("chatScreen");
@@ -33,15 +33,12 @@ const form = document.getElementById("form");
 const input = document.getElementById("input");
 const leaveBtn = document.getElementById("leaveBtn");
 
-const startRPS = document.getElementById("startRPS");
-const startTTT = document.getElementById("startTTT");
-
-// ------------- State
+// State
 let username = "";
 let roomId = "";
 let selectedFile = null;
 
-// ------------- Helpers
+// Helpers
 function show(screen) {
   [joinScreen, menuScreen, chatScreen].forEach(s => s.classList.remove("active"));
   screen.classList.add("active");
@@ -59,7 +56,7 @@ function addMessageToList(msg) {
   header.textContent = `[${time}] ${msg.user}: ${msg.text || ""}`;
   li.appendChild(header);
 
-  // file (link only)
+  // file link
   if (msg.file) {
     const line = document.createElement("div");
     const a = document.createElement("a");
@@ -70,7 +67,7 @@ function addMessageToList(msg) {
     li.appendChild(line);
   }
 
-  // delete button visible only for own normal messages
+  // delete button
   if (msg.type === "chat" && msg.user === username) {
     const del = document.createElement("button");
     del.textContent = "Delete";
@@ -79,102 +76,11 @@ function addMessageToList(msg) {
     header.appendChild(del);
   }
 
-  // render game blocks
-  if (msg.type === "game") {
-    if (msg.gameType === "rps") {
-      const g = document.createElement("div");
-      g.style.marginTop = "6px";
-      const state = msg.state;
-      g.innerHTML = `<div><strong>Rock–Paper–Scissors</strong></div>`;
-      const moveRow = document.createElement("div");
-      ["rock","paper","scissors"].forEach(m => {
-        const b = document.createElement("button");
-        b.textContent = m;
-        b.onclick = () => socket.emit("playMove", { roomId, msgId: msg.id, move: m });
-        moveRow.appendChild(b);
-      });
-      g.appendChild(moveRow);
-
-      const info = document.createElement("div");
-      info.className = "rps-info";
-      if (state.result) {
-        const { p1, m1, p2, m2, winner } = state.result;
-        info.textContent = `Results: ${p1} chose ${m1}, ${p2} chose ${m2}. Winner: ${winner === "draw" ? "Draw" : winner}`;
-      } else {
-        const players = Object.keys(state.moves);
-        info.textContent = `Moves received: ${players.length} / 2`;
-      }
-      g.appendChild(info);
-      li.appendChild(g);
-    }
-
-    if (msg.gameType === "ttt") {
-      const g = document.createElement("div");
-      g.style.marginTop = "6px";
-      const state = msg.state;
-
-      const board = document.createElement("div");
-      board.style.display = "grid";
-      board.style.gridTemplateColumns = "repeat(3, 44px)";
-      board.style.gap = "4px";
-
-      for (let i = 0; i < 9; i++) {
-        const b = document.createElement("button");
-        b.textContent = state.board[i] || " ";
-        b.style.width = "44px";
-        b.style.height = "44px";
-        b.onclick = () => socket.emit("playMove", { roomId, msgId: msg.id, move: i });
-        board.appendChild(b);
-      }
-
-      const info = document.createElement("div");
-      if (state.result === "draw") info.textContent = "Game over: Draw";
-      else if (state.result) info.textContent = `Game over: ${state.winner} wins`;
-      else info.textContent = `Turn: ${state.turn}`;
-
-      g.appendChild(board);
-      g.appendChild(info);
-      li.appendChild(g);
-    }
-  }
-
   messages.appendChild(li);
   messages.scrollTop = messages.scrollHeight;
 }
 
-function rerenderGameMessage(msgId, newState) {
-  const li = messages.querySelector(`li[data-id="${msgId}"]`);
-  if (!li) return;
-  // replace whole node for simplicity (re-render from cached msg object if any)
-  // Find original type
-  // We’ll just update dynamic bits inside li:
-  const info = li.querySelector(".rps-info");
-  if (info && newState.result) {
-    const { p1, m1, p2, m2, winner } = newState.result;
-    info.textContent = `Results: ${p1} chose ${m1}, ${p2} chose ${m2}. Winner: ${winner === "draw" ? "Draw" : winner}`;
-  }
-  if (!info && li.innerHTML.includes("Rock–Paper–Scissors")) {
-    // moves count area (if not resolved)
-    const area = li.querySelector("div div:last-child");
-    if (area) {
-      const players = Object.keys(newState.moves || {});
-      area.textContent = `Moves received: ${players.length} / 2`;
-    }
-  }
-  if (li.innerHTML.includes("Tic–Tac–Toe")) {
-    const buttons = li.querySelectorAll("button");
-    newState.board.forEach((v, i) => {
-      if (buttons[i]) buttons[i].textContent = v || " ";
-    });
-    const infos = li.querySelectorAll("div");
-    const infoNode = infos[infos.length - 1];
-    if (newState.result === "draw") infoNode.textContent = "Game over: Draw";
-    else if (newState.result) infoNode.textContent = `Game over: ${newState.winner} wins`;
-    else infoNode.textContent = `Turn: ${newState.turn}`;
-  }
-}
-
-// ------------- Join & Menu
+// Join & Menu
 joinForm.addEventListener("submit", (e) => {
   e.preventDefault();
   username = joinName.value.trim() || "Anonymous";
@@ -228,7 +134,7 @@ function joinRoom(rid, pass) {
   });
 }
 
-// ------------- Chat + File Preview
+// File Preview
 fileInput.addEventListener("change", () => {
   if (!fileInput.files.length) return;
   selectedFile = fileInput.files[0];
@@ -241,6 +147,7 @@ filePreview.addEventListener("click", () => {
   filePreview.style.display = "none";
 });
 
+// Send Message
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
   if (!roomId) return;
@@ -254,7 +161,6 @@ form.addEventListener("submit", async (e) => {
     const resp = await fetch("/upload", { method: "POST", body: data });
     const json = await resp.json();
     if (json.ok) fileData = json.file;
-    // reset preview
     selectedFile = null;
     fileInput.value = "";
     filePreview.style.display = "none";
@@ -270,7 +176,7 @@ input.addEventListener("input", () => {
   socket.emit("typing", { roomId, typing: input.value.length > 0 });
 });
 
-// ------------- Socket events
+// Socket events
 socket.on("chatMessage", (msg) => addMessageToList(msg));
 socket.on("messageDeleted", ({ msgId }) => {
   const li = messages.querySelector(`li[data-id="${msgId}"]`);
@@ -279,21 +185,8 @@ socket.on("messageDeleted", ({ msgId }) => {
 socket.on("typing", ({ user, typing }) => {
   typingIndicator.textContent = typing ? `${user} is typing...` : "";
 });
-socket.on("gameUpdated", ({ msgId, state }) => {
-  rerenderGameMessage(msgId, state);
-});
 
-// ------------- Games
-startRPS.onclick = () => {
-  if (!roomId) return;
-  socket.emit("startGame", { roomId, gameType: "rps" });
-};
-startTTT.onclick = () => {
-  if (!roomId) return;
-  socket.emit("startGame", { roomId, gameType: "ttt" });
-};
-
-// ------------- Leave
+// Leave
 leaveBtn.onclick = () => {
   roomId = "";
   show(menuScreen);
