@@ -67,20 +67,17 @@ createRoomBtn.addEventListener("click", () => {
 joinBtn.addEventListener("click", () => {
   createForm.style.display = "none";
   joinForm2.style.display = "block";
-  socket.emit("listRooms", rooms => {
-    roomList.innerHTML = "";
-    rooms.forEach(r => {
-      const div = document.createElement("div");
-      div.className = "card";
-      div.dataset.id = r.id;
-      div.textContent = `${r.name} (${r.users} online)`;
-      div.addEventListener("click", () => {
-        roomList.querySelectorAll(".card").forEach(c => c.classList.remove("active"));
-        div.classList.add("active");
-      });
-      roomList.appendChild(div);
-    });
+  const roomDropdown = document.getElementById("roomDropdown");
+socket.emit("listRooms", rooms => {
+  roomDropdown.innerHTML = '<option value="">-- Select a room --</option>';
+  rooms.forEach(r => {
+    const opt = document.createElement("option");
+    opt.value = r.id;
+    opt.textContent = `${r.name} (${r.users} online)`;
+    roomDropdown.appendChild(opt);
   });
+});
+
 });
 
 // Join room
