@@ -18,7 +18,8 @@ const newRoomPass = document.getElementById("newRoomPass");
 const createRoomBtn = document.getElementById("createRoomBtn");
 
 const joinForm2 = document.getElementById("joinForm2");
-const roomList = document.getElementById("roomList");
+// CHANGED: use dropdown instead of roomList
+const roomDropdown = document.getElementById("roomDropdown");
 const joinPass = document.getElementById("joinPass");
 const joinRoomBtn = document.getElementById("joinRoomBtn");
 
@@ -67,28 +68,26 @@ createRoomBtn.addEventListener("click", () => {
 joinBtn.addEventListener("click", () => {
   createForm.style.display = "none";
   joinForm2.style.display = "block";
-  const roomDropdown = document.getElementById("roomDropdown");
-socket.emit("listRooms", rooms => {
-  roomDropdown.innerHTML = '<option value="">-- Select a room --</option>';
-  rooms.forEach(r => {
-    const opt = document.createElement("option");
-    opt.value = r.id;
-    opt.textContent = `${r.name} (${r.users} online)`;
-    roomDropdown.appendChild(opt);
+  socket.emit("listRooms", rooms => {
+    // CHANGED: populate dropdown
+    roomDropdown.innerHTML = '<option value="">-- Select a room --</option>';
+    rooms.forEach(r => {
+      const opt = document.createElement("option");
+      opt.value = r.id;
+      opt.textContent = `${r.name} (${r.users} online)`;
+      roomDropdown.appendChild(opt);
+    });
   });
-});
-
 });
 
 // Join room
 joinRoomBtn.addEventListener("click", () => {
-  const selected = roomDropdown.value;
-if (!selected) {
-  alert("Select a room first");
-  return;
-}
-joinRoom(selected, joinPass.value);
-
+  const selected = roomDropdown.value; // CHANGED
+  if (!selected) {
+    alert("Select a room first");
+    return;
+  }
+  joinRoom(selected, joinPass.value);
 });
 
 // Join room function
@@ -124,12 +123,13 @@ function addMessage(msg) {
 
 // Update users live
 socket.on("roomUsers", ({ roomId, count }) => {
-[...roomDropdown.options].forEach(opt => {
-  if (opt.value === roomId) {
-    const base = opt.textContent.split("(")[0].trim();
-    opt.textContent = `${base} (${count} online)`;
-  }
-});
+  // CHANGED: update dropdown option text instead of card
+  [...roomDropdown.options].forEach(opt => {
+    if (opt.value === roomId) {
+      const base = opt.textContent.split("(")[0].trim();
+      opt.textContent = `${base} (${count} online)`;
+    }
+  });
 });
 
 // Leave
