@@ -44,7 +44,7 @@ joinForm.addEventListener("submit", e => {
   show(menuScreen);
 });
 
-// Random chat
+// Quick random join (adjust roomId as needed by your server)
 randomBtn.addEventListener("click", () => {
   joinRoom("lobby", "");
 });
@@ -58,56 +58,61 @@ createBtn.addEventListener("click", () => {
 // Create room
 createRoomBtn.addEventListener("click", () => {
   socket.emit("createRoom", { roomName: newRoomName.value, password: newRoomPass.value }, res => {
-    if (res.error) return alert(res.error);
-    joinRoom(res.roomId, newRoomPass.value, newRoomName.value);
+    if (!res || res.ok !== true) {
+      alert(res?.error || "Failed to create room");
+      return;
+    }
+    // server returns { ok: true, roomId, roomName? }
+    joinRoom(res.roomId, newRoomPass.value, res.roomName || newRoomName.value);
   });
 });
 
-// Show join form
+// Show join form and populate dropdown
 joinBtn.addEventListener("click", () => {
   createForm.style.display = "none";
   joinForm2.style.display = "block";
+
   socket.emit("listRooms", rooms => {
     roomDropdown.innerHTML = '<option value="">-- Select a room --</option>';
     rooms.forEach(r => {
       const opt = document.createElement("option");
+      // server list should provide r.id, r.name, r.users
       opt.value = r.id;
-      opt.dataset.name = r.name; // store room name
+      opt.dataset.name = r.name;
       opt.textContent = `${r.name} (${r.users} online)`;
       roomDropdown.appendChild(opt);
     });
   });
 });
 
-// Join room
+// Join room using selected option
 joinRoomBtn.addEventListener("click", () => {
   const selectedOpt = roomDropdown.options[roomDropdown.selectedIndex];
-  if (!selectedOpt.value) {
+  if (!selectedOpt || !selectedOpt.value) {
     alert("Select a room first");
     return;
   }
   joinRoom(selectedOpt.value, joinPass.value, selectedOpt.dataset.name);
 });
 
-// Join room function
+// Core join function
 function joinRoom(roomId, password, fallbackName = "") {
   socket.emit("joinRoom", { roomId, password, user: username }, res => {
-    console.log("joinRoom response:", res); // DEBUG: see what server sends
+    console.log("joinRoom response:", res);
 
-    if (!res || res.error) {
+    // Your server returns { ok: true, messages: [], roomName: "..." }
+    if (!res || res.ok !== true) {
       alert(res?.error || "Failed to join room");
       return;
     }
 
     currentRoom = roomId;
 
-    // Use server-provided roomName OR fallback OR "Chatroom"
-    roomTitle.textContent = res.roomName || res.name || fallbackName || "Chatroom";
+    // Prefer server roomName; fallback to provided name
+    roomTitle.textContent = res.roomName || fallbackName || "Chatroom";
 
-    // Clear messages
+    // Reset messages and render any history
     messagesEl.innerHTML = "";
-
-    // If server provided messages, render them safely
     if (Array.isArray(res.messages)) {
       res.messages.forEach(addMessage);
     }
@@ -116,27 +121,27 @@ function joinRoom(roomId, password, fallbackName = "") {
   });
 }
 
-
-// Send chat
+// Send message
 form.addEventListener("submit", e => {
   e.preventDefault();
   const text = input.value.trim();
-  if (!text) return;
+  if (!text || !currentRoom) return;
   socket.emit("chatMessage", { roomId: currentRoom, user: username, text });
   input.value = "";
 });
 
-// Render messages
+// Incoming messages
 socket.on("chatMessage", addMessage);
 function addMessage(msg) {
   const li = document.createElement("li");
-  const time = new Date(msg.timestamp).toLocaleTimeString();
+  const ts = msg.timestamp ? new Date(msg.timestamp) : new Date();
+  const time = ts.toLocaleTimeString();
   li.textContent = `[${time}] ${msg.user}: ${msg.text}`;
   messagesEl.appendChild(li);
   messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 
-// Update users live
+// Live user count updates (if your server emits this)
 socket.on("roomUsers", ({ roomId, count }) => {
   [...roomDropdown.options].forEach(opt => {
     if (opt.value === roomId) {
@@ -146,7 +151,7 @@ socket.on("roomUsers", ({ roomId, count }) => {
   });
 });
 
-// Leave
+// Leave room (client-side view reset)
 leaveBtn.addEventListener("click", () => {
   show(menuScreen);
   currentRoom = "";
