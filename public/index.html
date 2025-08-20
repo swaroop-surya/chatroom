@@ -31,8 +31,14 @@
     color:#fff;
     border:1px solid #fff;
     padding:10px 12px;
+    border-radius: 6px;
+    transition: all 0.2s ease-in-out;
   }
-  button { cursor:pointer; }
+  input:focus, button:hover, select:focus {
+    box-shadow: 0 0 8px #fff;
+    outline: none;
+  }
+  button { cursor:pointer; font-weight:bold; }
 
   /* Join screen */
   #joinForm {
@@ -45,26 +51,48 @@
   }
 
   /* Menu screen */
-  #menuScreen h1 { margin-bottom: 24px; }
+  #menuScreen h1 {
+    margin-bottom: 24px;
+  }
+
+  /* Menu options (cards) */
   #menuScreen .cards {
     display: flex;
     flex-direction: column;
     gap: 16px;
     width: 100%;
-    max-width: 300px;
+    max-width: 320px;
+    margin-bottom: 20px;
   }
+  #menuScreen .card {
+    border: 1px solid #fff;
+    padding: 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    border-radius: 6px;
+  }
+  #menuScreen .card:hover,
+  #menuScreen .card:focus {
+    box-shadow: 0 0 10px #fff;
+    transform: translateY(-2px);
+  }
+
+  /* Forms inside menu */
   #menuScreen > div {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 14px;
     margin-top: 24px;
     align-items: center;
+    width: 100%;
+    max-width: 320px;
   }
   #menuScreen input,
   #menuScreen button,
   #menuScreen select {
     width: 100%;
-    max-width: 300px;
+    max-width: 320px;
   }
 
   /* Layout: game on top, chat below */
