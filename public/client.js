@@ -29,7 +29,6 @@ const joinPass = document.getElementById("joinPass");
 const joinRoomBtn = document.getElementById("joinRoomBtn");
 
 // Chat screen
-const roomTitle = document.getElementById("roomTitle");
 const messages = document.getElementById("messages");
 const typingIndicator = document.getElementById("typingIndicator");
 const fileInput = document.getElementById("fileInput");
@@ -76,18 +75,16 @@ const inputFun = document.getElementById("inputFun");
 // State
 let username = "";
 let roomId = "";
-let currentRole = "";   // player|spectator|chat
+let currentRole = "";
 let lastState = null;
-const userColors = {}; // store consistent colors for each user
+const userColors = {};
 
-// Helpers
+// --- Helpers ---
 function show(screen) {
   [joinScreen, menuScreen, chatScreen, funScreen].forEach(s => s.classList.remove("active"));
   screen.classList.add("active");
 }
 function clearMessages(list) { list.innerHTML = ""; }
-
-// --- Utility: hash username to consistent color
 function getUserColor(name) {
   if (userColors[name]) return userColors[name];
   const colors = ["#f55","#5f5","#55f","#ff5","#f5f","#5ff"];
@@ -97,27 +94,20 @@ function getUserColor(name) {
   userColors[name] = color;
   return color;
 }
-
-// --- Emoji converter
 function parseEmojis(text) {
-  return text
-    .replace(/:smile:/g, "😄")
-    .replace(/:sad:/g, "😢")
-    .replace(/:heart:/g, "❤️")
-    .replace(/:thumbsup:/g, "👍")
-    .replace(/:fire:/g, "🔥");
+  return text.replace(/:smile:/g, "😄").replace(/:sad:/g, "😢").replace(/:heart:/g, "❤️").replace(/:thumbsup:/g, "👍").replace(/:fire:/g, "🔥");
 }
 
-// --- Add Message
+// --- Message display ---
 function addMessageToList(msg, list, currentInputUser) {
   const li = document.createElement("li");
   li.dataset.id = msg.id;
   if (msg.user === currentInputUser && msg.type === "chat") li.classList.add("me");
 
   const header = document.createElement("div");
-  const time = new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-  
-  // Avatar
+  const time = new Date(msg.timestamp).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+
+  // avatar
   const avatar = document.createElement("span");
   avatar.textContent = msg.user[0].toUpperCase();
   avatar.style.background = getUserColor(msg.user);
@@ -130,37 +120,33 @@ function addMessageToList(msg, list, currentInputUser) {
   avatar.style.marginRight = "6px";
 
   header.appendChild(avatar);
-
   const textPart = document.createElement("span");
   textPart.innerHTML = `[${time}] <strong style="color:${getUserColor(msg.user)}">${msg.user}</strong>: ${parseEmojis(msg.text || "")}`;
   header.appendChild(textPart);
   li.appendChild(header);
 
-  // File
+  // file preview
   if (msg.file) {
     const line = document.createElement("div");
-    if (msg.file.url && msg.file.originalName) {
-      if (/\.(png|jpg|jpeg|gif|webp)$/i.test(msg.file.originalName)) {
-        const img = document.createElement("img");
-        img.src = msg.file.url;
-        img.style.maxWidth = "120px";
-        img.style.display = "block";
-        line.appendChild(img);
-      } else {
-        const a = document.createElement("a");
-        a.href = msg.file.url;
-        a.target = "_blank";
-        a.textContent = `📄 ${msg.file.originalName}`;
-        line.appendChild(a);
-      }
+    if (/\.(png|jpg|jpeg|gif|webp)$/i.test(msg.file.originalName)) {
+      const img = document.createElement("img");
+      img.src = msg.file.url;
+      img.style.maxWidth = "120px";
+      img.style.display = "block";
+      line.appendChild(img);
+    } else {
+      const a = document.createElement("a");
+      a.href = msg.file.url;
+      a.target = "_blank";
+      a.textContent = `📄 ${msg.file.originalName}`;
+      line.appendChild(a);
     }
     li.appendChild(line);
   }
 
-  // Delete
   if (msg.type === "chat" && msg.user === currentInputUser) {
     const del = document.createElement("button");
-    del.textContent = "X";
+    del.textContent = "Delete";
     del.style.marginLeft = "8px";
     del.onclick = () => socket.emit("deleteMessage", { roomId, msgId: msg.id });
     li.appendChild(del);
@@ -170,7 +156,7 @@ function addMessageToList(msg, list, currentInputUser) {
   list.scrollTop = list.scrollHeight;
 }
 
-// --- Resize canvas
+// --- Canvas ---
 function resizeCanvasToGrid() {
   const targetW = Math.min(720, Math.floor(window.innerWidth * 0.95));
   const cell = Math.floor(targetW / 24);
@@ -178,16 +164,13 @@ function resizeCanvasToGrid() {
   board.height = cell * 16;
 }
 
-// --- File Preview handler
+// --- File preview ---
 function setupFileHandler(inputEl, previewEl) {
   inputEl.addEventListener("change", () => {
     const file = inputEl.files[0];
     if (file) {
       previewEl.style.display = "block";
-      previewEl.innerHTML = `📎 ${file.name} (${Math.round(file.size / 1024)} KB) <button class="remove-btn">❌</button>`;
-      previewEl.classList.add("active");
-
-      // image thumbnail
+      previewEl.innerHTML = `📎 ${file.name} (${Math.round(file.size/1024)} KB) <button class="remove-btn">❌</button>`;
       if (file.type.startsWith("image/")) {
         const img = document.createElement("img");
         img.src = URL.createObjectURL(file);
@@ -195,24 +178,21 @@ function setupFileHandler(inputEl, previewEl) {
         img.style.marginLeft = "10px";
         previewEl.prepend(img);
       }
-
       previewEl.querySelector(".remove-btn").onclick = () => {
         inputEl.value = "";
         previewEl.style.display = "none";
         previewEl.innerHTML = "";
-        previewEl.classList.remove("active");
       };
     } else {
       previewEl.style.display = "none";
       previewEl.innerHTML = "";
-      previewEl.classList.remove("active");
     }
   });
 }
 setupFileHandler(fileInput, filePreview);
 setupFileHandler(fileInputFun, filePreviewFun);
 
-// --- Join
+// --- Join/Login ---
 joinForm.addEventListener("submit", (e) => {
   e.preventDefault();
   username = joinName.value.trim() || "Anonymous";
@@ -221,21 +201,20 @@ joinForm.addEventListener("submit", (e) => {
   refreshFunrooms();
 });
 
-// Menu actions
+// --- Menus ---
 randomBtn.onclick = () => joinRoom("lobby", "");
-createBtn.onclick = () => { createForm.style.display = "block"; joinForm2.style.display = "none"; createFunForm.style.display="none"; joinFunForm.style.display="none"; };
-joinBtn.onclick = () => { joinForm2.style.display = "block"; createForm.style.display = "none"; createFunForm.style.display="none"; joinFunForm.style.display="none"; refreshChatRooms(); };
-createFunBtn.onclick = () => { createFunForm.style.display = "block"; joinFunForm.style.display = "none"; createForm.style.display="none"; joinForm2.style.display="none"; };
-joinFunBtn.onclick = () => { joinFunForm.style.display = "block"; createFunForm.style.display = "none"; createForm.style.display="none"; joinForm2.style.display="none"; refreshJoinableFunrooms(); };
+createBtn.onclick = () => { createForm.style.display="block"; joinForm2.style.display="none"; createFunForm.style.display="none"; joinFunForm.style.display="none"; };
+joinBtn.onclick = () => { joinForm2.style.display="block"; createForm.style.display="none"; createFunForm.style.display="none"; joinFunForm.style.display="none"; refreshChatRooms(); };
+createFunBtn.onclick = () => { createFunForm.style.display="block"; joinFunForm.style.display="none"; createForm.style.display="none"; joinForm2.style.display="none"; };
+joinFunBtn.onclick = () => { joinFunForm.style.display="block"; createFunForm.style.display="none"; createForm.style.display="none"; joinForm2.style.display="none"; refreshJoinableFunrooms(); };
 
-// --- Chatroom create/join
+// --- Chatroom create/join ---
 createRoomBtn.onclick = () => {
   const name = newRoomName.value.trim();
   const pass = newRoomPass.value.trim();
   if (!name) return;
   socket.emit("createRoom", { roomName: name, password: pass }, (res) => {
-    if (res.ok) joinRoom(res.roomId, pass);
-    else alert(res.error || "Failed to create room");
+    if (res.ok) joinRoom(res.roomId, pass); else alert(res.error);
   });
 };
 joinRoomBtn.onclick = () => {
@@ -244,10 +223,9 @@ joinRoomBtn.onclick = () => {
   if (!rid) return alert("Choose a room");
   joinRoom(rid, pass);
 };
-
 function joinRoom(rid, pass) {
   socket.emit("joinRoom", { roomId: rid, password: pass, user: username }, (res) => {
-    if (!res.ok) return alert(res.error || "Failed to join");
+    if (!res.ok) return alert(res.error);
     roomId = rid;
     currentRole = "chat";
     clearMessages(messages);
@@ -256,7 +234,7 @@ function joinRoom(rid, pass) {
   });
 }
 
-// --- Funroom create/join
+// --- Funroom create/join ---
 createFunroomBtn.onclick = () => {
   const name = newFunName.value.trim();
   const pass = newFunPass.value.trim();
@@ -264,8 +242,7 @@ createFunroomBtn.onclick = () => {
   const t60 = !!timer60.checked;
   if (!name) return alert("Funroom name required");
   socket.emit("createFunroom", { roomName: name, password: pass, funMode: mode, timer60: t60 }, (res) => {
-    if (res.ok) joinFunroomDirect(res.roomId, pass);
-    else alert(res.error || "Failed to create funroom");
+    if (res.ok) joinFunroomDirect(res.roomId, pass); else alert(res.error);
   });
 };
 joinFunroomBtn.onclick = () => {
@@ -276,7 +253,7 @@ joinFunroomBtn.onclick = () => {
 };
 function joinFunroomDirect(rid, pass) {
   socket.emit("joinFunroom", { roomId: rid, password: pass, user: username }, (res) => {
-    if (!res.ok) return alert(res.error || "Failed to join funroom");
+    if (!res.ok) return alert(res.error);
     roomId = rid;
     currentRole = res.role;
     funRoomTitle.textContent = res.roomName;
@@ -288,7 +265,7 @@ function joinFunroomDirect(rid, pass) {
   });
 }
 
-// Refresh lists
+// --- Refresh lists ---
 function refreshChatRooms() {
   socket.emit("listRooms", (rooms) => {
     roomDropdown.innerHTML = `<option value="">-- Select a room --</option>`;
@@ -300,7 +277,7 @@ function refreshChatRooms() {
     });
   });
 }
-function refreshFunrooms() { socket.emit("listFunrooms", () => {}); }
+function refreshFunrooms() { socket.emit("listFunrooms", ()=>{}); }
 function refreshJoinableFunrooms() {
   socket.emit("listJoinableFunrooms", (list) => {
     funDropdown.innerHTML = `<option value="">-- Select a funroom --</option>`;
@@ -313,7 +290,7 @@ function refreshJoinableFunrooms() {
   });
 }
 
-// --- Send message (chat)
+// --- Sending messages ---
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
   if (!roomId) return;
@@ -321,16 +298,15 @@ form.addEventListener("submit", async (e) => {
   let fileData = null;
   if (fileInput.files[0]) {
     const data = new FormData(); data.append("file", fileInput.files[0]);
-    const resp = await fetch("/upload", { method:"POST", body:data });
+    const resp = await fetch("/upload",{method:"POST",body:data});
     const json = await resp.json(); if (json.ok) fileData=json.file;
-    fileInput.value=""; filePreview.style.display="none"; filePreview.innerHTML=""; filePreview.classList.remove("active");
+    fileInput.value=""; filePreview.style.display="none"; filePreview.innerHTML="";
   }
-  if (text || fileData) socket.emit("chatMessage", { roomId, user: username, text, file: fileData });
+  if (text || fileData) socket.emit("chatMessage",{roomId,user:username,text,file:fileData});
   input.value = "";
 });
-input.addEventListener("input", () => socket.emit("typing", { roomId, typing: input.value.length > 0 }));
+input.addEventListener("input",()=>socket.emit("typing",{roomId,typing:input.value.length>0}));
 
-// --- Send message (fun)
 formFun.addEventListener("submit", async (e) => {
   e.preventDefault();
   if (!roomId) return;
@@ -338,80 +314,69 @@ formFun.addEventListener("submit", async (e) => {
   let fileData = null;
   if (fileInputFun.files[0]) {
     const data = new FormData(); data.append("file", fileInputFun.files[0]);
-    const resp = await fetch("/upload", { method:"POST", body:data });
+    const resp = await fetch("/upload",{method:"POST",body:data});
     const json = await resp.json(); if (json.ok) fileData=json.file;
-    fileInputFun.value=""; filePreviewFun.style.display="none"; filePreviewFun.innerHTML=""; filePreviewFun.classList.remove("active");
+    fileInputFun.value=""; filePreviewFun.style.display="none"; filePreviewFun.innerHTML="";
   }
-  if (text || fileData) socket.emit("chatMessage", { roomId, user: username, text, file: fileData });
+  if (text || fileData) socket.emit("chatMessage",{roomId,user:username,text,file:fileData});
   inputFun.value = "";
 });
-inputFun.addEventListener("input", () => socket.emit("typing", { roomId, typing: inputFun.value.length > 0 }));
+inputFun.addEventListener("input",()=>socket.emit("typing",{roomId,typing:inputFun.value.length>0}));
 
-// --- Socket chat events
-socket.on("chatMessage", (msg) => {
-  if (currentRole==="chat") addMessageToList(msg, messages, username);
-  else if (roomId) addMessageToList(msg, messagesFun, username);
-});
-socket.on("messageDeleted", ({ msgId }) => {
-  const li1 = messages.querySelector(`li[data-id="${msgId}"]`);
-  const li2 = messagesFun.querySelector(`li[data-id="${msgId}"]`);
-  if (li1) li1.remove(); if (li2) li2.remove();
-});
-socket.on("typing", ({ user, typing }) => {
-  if (currentRole==="chat") typingIndicator.textContent = typing?`${user} is typing...`:"";
-  else typingIndicatorFun.textContent = typing?`${user} is typing...`:"";
-});
+// --- Socket events ---
+socket.on("chatMessage",(msg)=>{ if(currentRole==="chat") addMessageToList(msg,messages,username); else addMessageToList(msg,messagesFun,username); });
+socket.on("messageDeleted",({msgId})=>{messages.querySelector(`li[data-id="${msgId}"]`)?.remove();messagesFun.querySelector(`li[data-id="${msgId}"]`)?.remove();});
+socket.on("typing",({user,typing})=>{if(currentRole==="chat") typingIndicator.textContent=typing?`${user} is typing...`:""; else typingIndicatorFun.textContent=typing?`${user} is typing...`:"";});
 
-// --- Leave
-leaveBtn.onclick = () => { roomId=""; show(menuScreen); refreshChatRooms(); };
-leaveFunBtn.onclick = () => { roomId=""; currentRole=""; lastState=null; show(menuScreen); refreshJoinableFunrooms(); };
+// --- Leave ---
+leaveBtn.onclick = ()=>{roomId="";show(menuScreen);refreshChatRooms();};
+leaveFunBtn.onclick = ()=>{roomId="";currentRole="";lastState=null;show(menuScreen);refreshJoinableFunrooms();};
 
-// --- Game input
-window.addEventListener("keydown", (e) => {
-  if (!roomId || currentRole!=="player") return;
+// --- Game Input ---
+window.addEventListener("keydown",(e)=>{
+  if(!roomId||currentRole!=="player") return;
   let dir=null;
-  if (["ArrowUp","w","W"].includes(e.key)) dir="up";
-  else if (["ArrowDown","s","S"].includes(e.key)) dir="down";
-  else if (["ArrowLeft","a","A"].includes(e.key)) dir="left";
-  else if (["ArrowRight","d","D"].includes(e.key)) dir="right";
-  if (dir) { e.preventDefault(); socket.emit("playerInput",{roomId,dir}); }
+  if(["ArrowUp","w","W"].includes(e.key)) dir="up";
+  else if(["ArrowDown","s","S"].includes(e.key)) dir="down";
+  else if(["ArrowLeft","a","A"].includes(e.key)) dir="left";
+  else if(["ArrowRight","d","D"].includes(e.key)) dir="right";
+  if(dir){e.preventDefault();socket.emit("playerInput",{roomId,dir});}
 });
 
-// --- Game events
-socket.on("gameState", (state) => {
-  if (!roomId || state.id!==roomId) return;
-  lastState = state;
+// --- Game State ---
+socket.on("gameState",(state)=>{
+  if(!roomId||state.id!==roomId) return;
+  lastState=state;
   updateHud(state);
   draw(state);
 });
-playAgainBtn.onclick = () => { if(roomId) socket.emit("playAgain", {roomId, timer60: !!timer60Replay.checked}); };
+playAgainBtn.onclick=()=>{if(roomId) socket.emit("playAgain",{roomId,timer60:!!timer60Replay.checked});};
 
-// --- HUD + draw
+// --- HUD + Draw ---
 function updateHud(state){
   const p1=state.players?.[0], p2=state.players?.[1];
   roleBadge.textContent = currentRole?`Role: ${currentRole}`:"";
   scoreP1.textContent = p1?`P1(${p1.name}) Score: ${p1.score}`:"P1 waiting…";
   scoreP2.textContent = p2?`P2(${p2.name}) Score: ${p2.score}`:"P2 waiting…";
   spectators.textContent = state.spectators?.length?`Spectators: ${state.spectators.length}`:"Spectators: 0";
-  if (state.timerEndsAt){ const ms=Math.max(0,state.timerEndsAt-Date.now()); timerLabel.textContent=`Timer: ${Math.ceil(ms/1000)}s`; }
-  else timerLabel.textContent="";
-  if (state.finished){
-    playAgainBtn.style.display="inline-block";
-    // 🏆 announce in chat
-    if(state.winner) socket.emit("chatMessage",{roomId,user:"System",text:`🏆 ${state.winner.name} wins the match!`});
-  } else playAgainBtn.style.display="none";
+  if(state.timerEndsAt){const ms=Math.max(0,state.timerEndsAt-Date.now());timerLabel.textContent=`Timer: ${Math.ceil(ms/1000)}s`;}else timerLabel.textContent="";
+  if(state.status==="gameover"){
+    if(state.winner===null) roleBadge.textContent="Result: Draw";
+    else roleBadge.textContent=`Winner: ${state.players[state.winner].name}`;
+    socket.emit("chatMessage",{roomId,user:"System",text:`🏆 Game Over! ${state.winner===null?"It's a draw":state.players[state.winner].name+" wins"}!`});
+  }
 }
-
 function draw(state){
-  if(!state||!state.players) return;
-  const cell=board.width/24;
-  ctx.fillStyle="black"; ctx.fillRect(0,0,board.width,board.height);
-  ctx.fillStyle="lime"; ctx.fillRect(state.food.x*cell,state.food.y*cell,cell,cell);
-  state.players.forEach((p,i)=>{
-    ctx.fillStyle=getUserColor(p.name);
-    p.snake.forEach(seg=>ctx.fillRect(seg.x*cell,seg.y*cell,cell,cell));
-  });
-  // Overlay Controls
-  ctx.fillStyle="white"; ctx.font="12px monospace"; ctx.fillText("Controls: W/A/S/D or Arrows", 5, board.height-5);
+  resizeCanvasToGrid();
+  ctx.clearRect(0,0,board.width,board.height);
+  const cellW=board.width/24, cellH=board.height/16;
+  ctx.strokeStyle="#333"; ctx.lineWidth=2; ctx.strokeRect(0,0,board.width,board.height);
+  ctx.strokeStyle="#1a1a1a"; ctx.lineWidth=1;
+  for(let x=1;x<24;x++){ctx.beginPath();ctx.moveTo(x*cellW,0);ctx.lineTo(x*cellW,board.height);ctx.stroke();}
+  for(let y=1;y<16;y++){ctx.beginPath();ctx.moveTo(0,y*cellH);ctx.lineTo(board.width,y*cellH);ctx.stroke();}
+  if(state.food){ctx.fillStyle="#ffd24c";ctx.fillRect(state.food.x*cellW,state.food.y*cellH,cellW,cellH);}
+  state.players?.forEach(p=>{if(!p.body)return;ctx.fillStyle=getUserColor(p.name);p.body.forEach((seg,i)=>{ctx.fillRect(seg.x*cellW,seg.y*cellH,cellW,cellH);if(i===0){ctx.strokeStyle="#000";ctx.lineWidth=2;ctx.strokeRect(seg.x*cellW+2,seg.y*cellH+2,cellW-4,cellH-4);}});});
+  if(state.status!=="running"){ctx.fillStyle="rgba(0,0,0,0.5)";ctx.fillRect(0,0,board.width,board.height);ctx.fillStyle="#fff";ctx.textAlign="center";ctx.font=`${Math.floor(board.height/12)}px monospace`;ctx.fillText(state.status==="waiting"?"Waiting…":"Game Over",board.width/2,board.height/2);}
+  ctx.fillStyle="white"; ctx.font="12px monospace"; ctx.textAlign="left"; ctx.fillText("Controls: W/A/S/D or Arrows",5,board.height-5);
 }
-window.addEventListener("resize",resizeCanvasToGrid);
+window.addEventListener("resize",()=>{if(lastState)draw(lastState);});
