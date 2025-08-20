@@ -6,203 +6,176 @@
   <link href="slogow.png" rel="icon" type="image/png"/>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    :root { color-scheme: dark; }
-    body { font-family: "Courier New", monospace; background:#000; color:#fff; margin:0; }
-    section { display:none; min-height:100vh; padding:16px; box-sizing:border-box; }
-    .active { display:block !important; }
-    input, button, select { font-family:inherit; background:#000; color:#fff; border:1px solid #fff; padding:10px 12px; }
-    button { cursor:pointer; }
-    .cards { display:flex; gap:12px; flex-wrap:wrap; justify-content:center; margin:16px 0; }
-    .card { border:1px solid #fff; padding:14px 18px; cursor:pointer; }
+  :root { color-scheme: dark; }
+  body { font-family: "Courier New", monospace; background:#000; color:#fff; margin:0; }
 
-    /* Layout: game on top, chat below */
-    #gameArea { max-width: 980px; margin: 0 auto; display:flex; flex-direction:column; gap:12px; }
-    #gameHeader { display:flex; align-items:center; justify-content:space-between; gap:10px; }
-    #gameInfo { display:flex; gap:16px; align-items:center; flex-wrap:wrap; }
-    #canvasWrap { display:flex; justify-content:center; }
-    canvas { image-rendering: pixelated; border:1px solid #444; background:#111; }
+  /* Sections */
+  section {
+    display: none;
+    min-height: 100vh;
+    padding: 16px;
+    box-sizing: border-box;
+  }
+  section.active {
+    display: flex !important;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
 
-    /* Chat full screen */
-    #chat, #chatFun {
-      width: 100%;
-      height: 100vh;
-      border: 1px solid #fff;
-      padding: 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      box-sizing: border-box;
-    }
+  /* Inputs + Buttons */
+  input, button, select {
+    font-family: inherit;
+    background:#000;
+    color:#fff;
+    border:1px solid #fff;
+    padding:10px 12px;
+  }
+  button { cursor:pointer; }
 
-    #messages, #messagesFun {
-      flex: 1;
-      overflow-y: auto;
-      border: 1px solid #333;
-      padding: 0;
-      margin: 0;
-      list-style: none;
-    }
+  /* Join screen */
+  #joinForm {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+    max-width: 320px;
+    margin-top: 20px;
+  }
 
-    #messages li, #messagesFun li { padding:8px 10px; border-bottom:1px solid #222; text-align:left; }
-    #messages li.me, #messagesFun li.me { text-align:right; }
+  /* Menu screen */
+  #menuScreen h1 { margin-bottom: 24px; }
+  #menuScreen .cards {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+    max-width: 300px;
+  }
+  #menuScreen > div {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 24px;
+    align-items: center;
+  }
+  #menuScreen input,
+  #menuScreen button,
+  #menuScreen select {
+    width: 100%;
+    max-width: 300px;
+  }
 
-    #form, #formFun {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
+  /* Layout: game on top, chat below */
+  #gameArea { max-width: 980px; margin: 0 auto; display:flex; flex-direction:column; gap:12px; }
+  #gameHeader { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  #gameInfo { display:flex; gap:16px; align-items:center; flex-wrap:wrap; }
+  #canvasWrap { display:flex; justify-content:center; }
+  canvas { image-rendering: pixelated; border:1px solid #444; background:#111; }
 
-    #form input, #formFun input { flex: 1; }
+  /* Chat full screen */
+  #chat, #chatFun {
+    width: 100%;
+    height: 100vh;
+    border: 1px solid #fff;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    box-sizing: border-box;
+  }
 
-    #leaveBtn, #leaveFunBtn {
-      width: 100%;
-      margin-top: 6px;
-    }
+  #messages, #messagesFun {
+    flex: 1;
+    overflow-y: auto;
+    border: 1px solid #333;
+    padding: 0;
+    margin: 0;
+    list-style: none;
+  }
 
-    .typing { opacity:.8; font-size:.9rem; min-height:1.2em; text-align:left; }
+  #messages li, #messagesFun li { padding:8px 10px; border-bottom:1px solid #222; text-align:left; }
+  #messages li.me, #messagesFun li.me { text-align:right; }
 
-    /* File preview styling */
-    .file-preview {
-      border: 1px solid #555;
-      padding: 6px;
-      margin: 6px 0;
-      text-align: left;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .file-preview.active { border-color: #0f0; }
-    .remove-btn {
-      background: transparent;
-      border: none;
-      color: #f55;
-      font-size: 1rem;
-      cursor: pointer;
-    }
-    .remove-btn:hover { color: #f00; }
+  #form, #formFun { display: flex; align-items: center; gap: 8px; }
+  #form input, #formFun input { flex: 1; }
 
-    @media (max-width:768px) {
-      input,button,select { width:100%; font-size:.95rem; }
-      #gameHeader { flex-direction:column; align-items:flex-start; gap:8px; }
-    }
+  #leaveBtn, #leaveFunBtn { width: 100%; margin-top: 6px; }
+  .typing { opacity:.8; font-size:.9rem; min-height:1.2em; text-align:left; }
+
+  /* File preview styling */
+  .file-preview {
+    border: 1px solid #555;
+    padding: 6px;
+    margin: 6px 0;
+    text-align: left;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .file-preview.active { border-color: #0f0; }
+  .remove-btn {
+    background: transparent;
+    border: none;
+    color: #f55;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  .remove-btn:hover { color: #f00; }
+
   /* Chat bubbles */
-#messages li, #messagesFun li {
-  display: flex;
-  align-items: flex-start;
-  margin: 6px 0;
-  border: none;
-  background: none;
-  padding: 0;
-}
+  #messages li, #messagesFun li {
+    display: flex;
+    align-items: flex-start;
+    margin: 6px 0;
+    border: none;
+    background: none;
+    padding: 0;
+  }
+  #messages li.me, #messagesFun li.me { justify-content: flex-end; }
+  .bubble {
+    max-width: 70%;
+    padding: 8px 12px;
+    border-radius: 16px;
+    font-size: 0.95rem;
+    line-height: 1.3;
+    position: relative;
+    word-wrap: break-word;
+  }
+  .bubble.me { background: #0078ff; color: #fff; border-bottom-right-radius: 4px; }
+  .bubble.other { background: #222; color: #eee; border-bottom-left-radius: 4px; }
+  .bubble .time {
+    display: block;
+    font-size: 0.7rem;
+    opacity: 0.7;
+    margin-top: 2px;
+    text-align: right;
+  }
 
-#messages li.me, #messagesFun li.me {
-  justify-content: flex-end;
-}
+  /* avatar */
+  .avatar {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 6px;
+    color: #000;
+    font-weight: bold;
+  }
+  #messages li.me .avatar, #messagesFun li.me .avatar { display: none; }
 
-.bubble {
-  max-width: 70%;
-  padding: 8px 12px;
-  border-radius: 16px;
-  font-size: 0.95rem;
-  line-height: 1.3;
-  position: relative;
-  word-wrap: break-word;
-}
+  /* Responsive */
+  @media (max-width:768px) {
+    input,button,select { width:100%; font-size:.95rem; }
+    #gameHeader { flex-direction:column; align-items:flex-start; gap:8px; }
+  }
+</style>
 
-.bubble.me {
-  background: #0078ff;
-  color: #fff;
-  border-bottom-right-radius: 4px;
-}
-
-.bubble.other {
-  background: #222;
-  color: #eee;
-  border-bottom-left-radius: 4px;
-}
-
-.bubble .time {
-  display: block;
-  font-size: 0.7rem;
-  opacity: 0.7;
-  margin-top: 2px;
-  text-align: right;
-}
-
-/* avatar */
-.avatar {
-  flex-shrink: 0;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  font-size: 0.85rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 6px;
-  color: #000;
-  font-weight: bold;
-}
-#messages li.me .avatar, #messagesFun li.me .avatar { display: none; }
-
-    /* Center join screen */
-#joinScreen {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  min-height: 100vh;
-}
-
-#joinForm {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  width: 100%;
-  max-width: 320px;
-}
-
-/* Center menu screen */
-#menuScreen {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  min-height: 100vh;
-}
-
-#menuScreen h1 {
-  margin-bottom: 24px;
-}
-
-#menuScreen .cards {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  width: 100%;
-  max-width: 300px;
-}
-
-/* Make forms appear centered */
-#menuScreen > div {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-top: 24px;
-  align-items: center;
-}
-
-#menuScreen input,
-#menuScreen button,
-#menuScreen select {
-  width: 100%;
-  max-width: 300px;
-}
-
-    
-  </style>
 </head>
 <body>
   <!-- Join -->
