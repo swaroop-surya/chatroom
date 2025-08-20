@@ -331,21 +331,98 @@ formFun.addEventListener("submit", async e => {
 });
 inputFun.addEventListener("input", () => socket.emit("typing", { roomId, typing: inputFun.value.length > 0 }));
 
-// Socket chat events
-socket.on("chatMessage", msg => {
-  if (currentRole === "chat") addMessageToList(msg, messages, username);
-  else if (roomId) addMessageToList(msg, messagesFun, username);
-});
-socket.on("messageDeleted", ({ msgId }) => {
-  const li1 = messages.querySelector(`li[data-id="${msgId}"]`);
-  const li2 = messagesFun.querySelector(`li[data-id="${msgId}"]`);
-  if (li1) li1.remove();
-  if (li2) li2.remove();
-});
-socket.on("typing", ({ user, typing }) => {
-  if (currentRole === "chat") typingIndicator.textContent = typing ? `${user} is typing...` : "";
-  else typingIndicatorFun.textContent = typing ? `${user} is typing...` : "";
-});
+function addMessageToList(msg, list, currentInputUser) {
+  const li = document.createElement("li");
+  li.dataset.id = msg.id;
+
+  const bubble = document.createElement("div");
+  bubble.className = "bubble";
+  bubble.style.background = stringToColor(msg.user);
+
+  // Header with avatar + name + time
+  const header = document.createElement("div");
+  header.style.display = "flex";
+  header.style.alignItems = "center";
+  header.style.justifyContent = "space-between";
+
+  const left = document.createElement("div");
+  left.style.display = "flex";
+  left.style.alignItems = "center";
+  left.style.gap = "6px";
+
+  const avatar = document.createElement("div");
+  avatar.textContent = msg.user[0].toUpperCase();
+  avatar.style.width = "28px";
+  avatar.style.height = "28px";
+  avatar.style.borderRadius = "50%";
+  avatar.style.background = "#000";
+  avatar.style.color = "#fff";
+  avatar.style.display = "flex";
+  avatar.style.alignItems = "center";
+  avatar.style.justifyContent = "center";
+  avatar.style.fontWeight = "bold";
+
+  const name = document.createElement("span");
+  name.textContent = msg.user;
+  name.style.fontWeight = "bold";
+
+  left.appendChild(avatar);
+  left.appendChild(name);
+
+  const time = document.createElement("span");
+  time.textContent = new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+  time.style.fontSize = "0.8rem";
+  time.style.opacity = "0.8";
+
+  header.appendChild(left);
+  header.appendChild(time);
+
+  // Message text + emoji parsing
+  const body = document.createElement("div");
+  body.innerHTML = (msg.text || "").replace(/:\)/g, "😊").replace(/:D/g, "😃");
+
+  bubble.appendChild(header);
+  bubble.appendChild(body);
+
+  // File preview
+  if (msg.file) {
+    const fileLink = document.createElement("a");
+    fileLink.href = msg.file.url;
+    fileLink.target = "_blank";
+    fileLink.style.display = "block";
+    fileLink.style.marginTop = "5px";
+
+    if (msg.file.url.match(/\.(jpg|jpeg|png|gif)$/i)) {
+      const img = document.createElement("img");
+      img.src = msg.file.url;
+      img.style.maxWidth = "120px";
+      img.style.borderRadius = "6px";
+      fileLink.appendChild(img);
+    } else {
+      fileLink.textContent = "📎 " + msg.file.originalName;
+    }
+
+    bubble.appendChild(fileLink);
+  }
+
+  // ✅ Delete button (only if it's my message)
+  if (msg.user === currentInputUser) {
+    const del = document.createElement("button");
+    del.textContent = "🗑️";
+    del.style.marginLeft = "6px";
+    del.style.background = "transparent";
+    del.style.border = "none";
+    del.style.cursor = "pointer";
+    del.onclick = () => {
+      socket.emit("deleteMessage", { roomId, msgId: msg.id });
+    };
+    header.appendChild(del);
+  }
+
+  li.appendChild(bubble);
+  list.appendChild(li);
+  list.scrollTop = list.scrollHeight;
+}
 
 // Leave
 leaveBtn.onclick = () => {
