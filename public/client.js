@@ -227,23 +227,35 @@ function refreshJoinableFunrooms() {
   });
 }
 
-// File preview (chat)
-fileInput.addEventListener("change", () => {
-  if (!fileInput.files.length) return;
-  selectedFile = fileInput.files[0];
-  filePreview.textContent = `Selected: ${selectedFile.name} (${Math.round(selectedFile.size / 1024)} KB)`;
-  filePreview.style.display = "block";
-});
-filePreview.addEventListener("click", () => { selectedFile=null; fileInput.value=""; filePreview.style.display="none"; });
+// --- Improved File Preview System ---
+// Works for both chat + fun chat
+function setupFileHandler(inputEl, previewEl) {
+  if (!inputEl || !previewEl) return;
 
-// File preview (fun)
-fileInputFun.addEventListener("change", () => {
-  if (!fileInputFun.files.length) return;
-  selectedFileFun = fileInputFun.files[0];
-  filePreviewFun.textContent = `Selected: ${selectedFileFun.name} (${Math.round(selectedFileFun.size / 1024)} KB)`;
-  filePreviewFun.style.display = "block";
-});
-filePreviewFun.addEventListener("click", () => { selectedFileFun=null; fileInputFun.value=""; filePreviewFun.style.display="none"; });
+  inputEl.addEventListener("change", () => {
+    const file = inputEl.files[0];
+    if (file) {
+      previewEl.style.display = "block";
+      previewEl.textContent = `📎 ${file.name} (${Math.round(file.size / 1024)} KB)  ❌`;
+      previewEl.classList.add("active");
+
+      previewEl.onclick = () => {
+        inputEl.value = "";
+        previewEl.style.display = "none";
+        previewEl.textContent = "";
+        previewEl.classList.remove("active");
+      };
+    } else {
+      previewEl.style.display = "none";
+      previewEl.textContent = "";
+      previewEl.classList.remove("active");
+    }
+  });
+}
+
+// Apply handler
+setupFileHandler(fileInput, filePreview);
+setupFileHandler(fileInputFun, filePreviewFun);
 
 // Send message (chat)
 form.addEventListener("submit", async (e) => {
@@ -251,11 +263,11 @@ form.addEventListener("submit", async (e) => {
   if (!roomId) return;
   let text = input.value.trim();
   let fileData = null;
-  if (selectedFile) {
-    const data = new FormData(); data.append("file", selectedFile);
+  if (fileInput.files[0]) {
+    const data = new FormData(); data.append("file", fileInput.files[0]);
     const resp = await fetch("/upload", { method:"POST", body:data });
     const json = await resp.json(); if (json.ok) fileData=json.file;
-    selectedFile=null; fileInput.value=""; filePreview.style.display="none";
+    fileInput.value=""; filePreview.style.display="none"; filePreview.textContent=""; filePreview.classList.remove("active");
   }
   if (text || fileData) socket.emit("chatMessage", { roomId, user: username, text, file: fileData });
   input.value = "";
@@ -268,11 +280,11 @@ formFun.addEventListener("submit", async (e) => {
   if (!roomId) return;
   let text = inputFun.value.trim();
   let fileData = null;
-  if (selectedFileFun) {
-    const data = new FormData(); data.append("file", selectedFileFun);
+  if (fileInputFun.files[0]) {
+    const data = new FormData(); data.append("file", fileInputFun.files[0]);
     const resp = await fetch("/upload", { method:"POST", body:data });
     const json = await resp.json(); if (json.ok) fileData=json.file;
-    selectedFileFun=null; fileInputFun.value=""; filePreviewFun.style.display="none";
+    fileInputFun.value=""; filePreviewFun.style.display="none"; filePreviewFun.textContent=""; filePreviewFun.classList.remove("active");
   }
   if (text || fileData) socket.emit("chatMessage", { roomId, user: username, text, file: fileData });
   inputFun.value = "";
