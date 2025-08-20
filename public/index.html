@@ -145,6 +145,62 @@
 }
 #messages li.me .avatar, #messagesFun li.me .avatar { display: none; }
 
+    /* Center join screen */
+#joinScreen {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  min-height: 100vh;
+}
+
+#joinForm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 320px;
+}
+
+/* Center menu screen */
+#menuScreen {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  min-height: 100vh;
+}
+
+#menuScreen h1 {
+  margin-bottom: 24px;
+}
+
+#menuScreen .cards {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 300px;
+}
+
+/* Make forms appear centered */
+#menuScreen > div {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 24px;
+  align-items: center;
+}
+
+#menuScreen input,
+#menuScreen button,
+#menuScreen select {
+  width: 100%;
+  max-width: 300px;
+}
+
     
   </style>
 </head>
