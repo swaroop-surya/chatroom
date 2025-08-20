@@ -22,48 +22,64 @@
     #canvasWrap { display:flex; justify-content:center; }
     canvas { image-rendering: pixelated; border:1px solid #444; background:#111; }
 
-   #chat, #chatFun {
-  width: 100%;
-  height: 100vh;              /* full screen height */
-  border: 1px solid #fff;
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  box-sizing: border-box;
-}
+    /* Chat full screen */
+    #chat, #chatFun {
+      width: 100%;
+      height: 100vh;
+      border: 1px solid #fff;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-sizing: border-box;
+    }
 
-#messages, #messagesFun {
-  flex: 1;
-  overflow-y: auto;
-  border: 1px solid #333;
-  padding: 0;
-  margin: 0;
-  list-style: none;
-}
+    #messages, #messagesFun {
+      flex: 1;
+      overflow-y: auto;
+      border: 1px solid #333;
+      padding: 0;
+      margin: 0;
+      list-style: none;
+    }
 
-#form, #formFun {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+    #messages li, #messagesFun li { padding:8px 10px; border-bottom:1px solid #222; text-align:left; }
+    #messages li.me, #messagesFun li.me { text-align:right; }
 
-#form input, #formFun input {
-  flex: 1;                   /* stretch text box */
-}
+    #form, #formFun {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
 
-#leaveBtn, #leaveFunBtn {
-  width: 100%;               /* full width leave button */
-  margin-top: 6px;
-}
+    #form input, #formFun input { flex: 1; }
 
-    ul { list-style:none; padding:0; margin:0; flex:1; overflow-y:auto; border:1px solid #333; }
-    li { padding:8px 10px; border-bottom:1px solid #222; text-align:left; }
-    li.me { text-align:right; }
+    #leaveBtn, #leaveFunBtn {
+      width: 100%;
+      margin-top: 6px;
+    }
+
     .typing { opacity:.8; font-size:.9rem; min-height:1.2em; text-align:left; }
-    .toolbar { display:flex; gap:8px; align-items:center; }
-    .toolbar input[type="file"] { display:none; }
-    .file-label { border:1px solid #fff; padding:8px 10px; cursor:pointer; }
+
+    /* File preview styling */
+    .file-preview {
+      border: 1px solid #555;
+      padding: 6px;
+      margin: 6px 0;
+      text-align: left;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .file-preview.active { border-color: #0f0; }
+    .remove-btn {
+      background: transparent;
+      border: none;
+      color: #f55;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    .remove-btn:hover { color: #f00; }
 
     @media (max-width:768px) {
       input,button,select { width:100%; font-size:.95rem; }
@@ -142,7 +158,7 @@
     <div id="gameArea">
       <div id="gameHeader">
         <div id="gameInfo">
-          <strong id="funRoomTitle"></strong>
+          <strong id="roomTitle"></strong>
           <span id="roleBadge"></span>
           <span id="scoreP1"></span>
           <span id="scoreP2"></span>
@@ -162,56 +178,47 @@
         <canvas id="board" width="720" height="480"></canvas>
       </div>
 
-      <!-- Fun chat below the game -->
+      <!-- Chat below the game -->
       <div id="chatFun">
-        <div class="toolbar">
-          <label class="file-label" for="fileInputFun">Attach file</label>
-          <input id="fileInputFun" type="file" accept="image/*,.txt"/>
-          <span class="hint">Allowed: images & .txt (≤ 8 MB)</span>
-        </div>
-
-        <div id="filePreviewFun" class="file-preview" style="display:none; border:1px solid #555; padding:6px; margin:6px 0; text-align:left;"></div>
-
         <ul id="messagesFun"></ul>
         <div class="typing" id="typingIndicatorFun"></div>
-<form id="formFun">
-  <label class="file-label" for="fileInputFun">Attach</label>
-  <input id="fileInputFun" type="file" accept="image/*,.txt"/>
-  <input id="inputFun" placeholder="Type message..."/>
-  <button id="sendFun" type="submit">Send</button>
-</form>
 
-<button id="leaveFunBtn">Leave Funroom</button>
+        <form id="formFun">
+          <label class="file-label" for="fileInputFun">Attach</label>
+          <input id="fileInputFun" type="file" accept="image/*,.txt"/>
+          <input id="inputFun" placeholder="Type message..."/>
+          <button id="sendFun" type="submit">Send</button>
+        </form>
 
+        <div id="filePreviewFun" class="file-preview" style="display:none;">
+          <span id="fileNameFun"></span>
+          <button type="button" id="removeFileBtnFun" class="remove-btn">❌</button>
+        </div>
+
+        <button id="leaveFunBtn">Leave Funroom</button>
       </div>
     </div>
   </section>
 
   <!-- Normal chat screen -->
-  <section id="chatScreen">
+  <section id="chatScreen" style="display:none;">
     <div id="chat">
-      <h2 id="roomTitle"></h2>
-
-      <div class="toolbar">
-        <label class="file-label" for="fileInput">Attach file</label>
-        <input id="fileInput" type="file" accept="image/*,.txt"/>
-        <span class="hint">Allowed: images & .txt (≤ 8 MB)</span>
-      </div>
-
-      <div id="filePreview" class="file-preview" style="display:none; border:1px solid #555; padding:6px; margin:6px 0; text-align:left;"></div>
-
       <ul id="messages"></ul>
       <div class="typing" id="typingIndicator"></div>
 
-<form id="form">
-  <label class="file-label" for="fileInput">Attach</label>
-  <input id="fileInput" type="file" accept="image/*,.txt"/>
-  <input id="input" placeholder="Type message..."/>
-  <button id="send" type="submit">Send</button>
-</form>
+      <form id="form">
+        <label class="file-label" for="fileInput">Attach</label>
+        <input id="fileInput" type="file" accept="image/*,.txt"/>
+        <input id="input" placeholder="Type message..."/>
+        <button id="send" type="submit">Send</button>
+      </form>
 
-<button id="leaveBtn">Leave Chatroom</button>
+      <div id="filePreview" class="file-preview" style="display:none;">
+        <span id="fileName"></span>
+        <button type="button" id="removeFileBtn" class="remove-btn">❌</button>
+      </div>
 
+      <button id="leaveBtn">Leave Chatroom</button>
     </div>
   </section>
 
