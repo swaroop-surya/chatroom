@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Chat + Funrooms</title>
+  <title>Chatroom</title>
   <link href="slogow.png" rel="icon" type="image/png"/>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
@@ -153,52 +153,51 @@
     </div>
   </section>
 
-  <!-- Funroom (Game + Chat) -->
-  <section id="funScreen">
-    <div id="gameArea">
-      <div id="gameHeader">
-        <div id="gameInfo">
-          <strong id="funRoomTitle"></strong>
-          <span id="roleBadge"></span>
-          <span id="scoreP1"></span>
-          <span id="scoreP2"></span>
-          <span id="timerLabel"></span>
-          <span id="spectators"></span>
-        </div>
-        <div>
-          <button id="playAgainBtn">Play Again</button>
-          <label style="margin-left:8px;">
-            <input type="checkbox" id="timer60Replay"/> 60s Timer
-          </label>
-          <button id="leaveFunBtn" style="margin-left:8px;">Leave</button>
-        </div>
+ <!-- Funroom (Game + Chat) -->
+<section id="funScreen">
+  <div id="gameArea">
+    <div id="gameHeader">
+      <div id="gameInfo">
+        <strong id="funRoomTitle"></strong>
+        <span id="roleBadge"></span>
+        <span id="scoreP1"></span>
+        <span id="scoreP2"></span>
+        <span id="timerLabel"></span>
+        <span id="spectators"></span>
       </div>
-
-      <div id="canvasWrap">
-        <canvas id="board" width="720" height="480"></canvas>
-      </div>
-
-      <!-- Chat below the game -->
-      <div id="chatFun">
-        <ul id="messagesFun"></ul>
-        <div class="typing" id="typingIndicatorFun"></div>
-
-        <form id="formFun">
-          <label class="file-label" for="fileInputFun">Attach</label>
-          <input id="fileInputFun" type="file" accept="image/*,.txt"/>
-          <input id="inputFun" placeholder="Type message..."/>
-          <button id="sendFun" type="submit">Send</button>
-        </form>
-
-        <div id="filePreviewFun" class="file-preview" style="display:none;">
-          <span id="fileNameFun"></span>
-          <button type="button" id="removeFileBtnFun" class="remove-btn">❌</button>
-        </div>
-
-        <button id="leaveFunBtn">Leave Funroom</button>
+      <div>
+        <button id="playAgainBtn">Play Again</button>
+        <label style="margin-left:8px;">
+          <input type="checkbox" id="timer60Replay"/> 60s Timer
+        </label>
+        <button id="leaveFunBtn" style="margin-left:8px;">Leave Funroom</button>
       </div>
     </div>
-  </section>
+
+    <div id="canvasWrap">
+      <canvas id="board" width="720" height="480"></canvas>
+    </div>
+
+    <!-- Chat below the game -->
+    <div id="chatFun">
+      <ul id="messagesFun"></ul>
+      <div class="typing" id="typingIndicatorFun"></div>
+
+      <form id="formFun">
+        <label class="file-label" for="fileInputFun">Attach</label>
+        <input id="fileInputFun" type="file" accept="image/*,.txt"/>
+        <input id="inputFun" placeholder="Type message..."/>
+        <button id="sendFun" type="submit">Send</button>
+      </form>
+
+      <div id="filePreviewFun" class="file-preview" style="display:none;">
+        <span id="fileNameFun"></span>
+        <button type="button" id="removeFileBtnFun" class="remove-btn">❌</button>
+      </div>
+    </div>
+  </div>
+</section>
+
 
   <!-- Normal chat screen -->
   <section id="chatScreen" style="display:none;">
