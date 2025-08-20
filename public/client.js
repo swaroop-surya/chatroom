@@ -160,7 +160,7 @@ function addMessageToList(msg, list, currentInputUser) {
   // Delete
   if (msg.type === "chat" && msg.user === currentInputUser) {
     const del = document.createElement("button");
-    del.textContent = "Delete";
+    del.textContent = "X";
     del.style.marginLeft = "8px";
     del.onclick = () => socket.emit("deleteMessage", { roomId, msgId: msg.id });
     li.appendChild(del);
