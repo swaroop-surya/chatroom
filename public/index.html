@@ -22,10 +22,10 @@
     #canvasWrap { display:flex; justify-content:center; }
     canvas { image-rendering: pixelated; border:1px solid #444; background:#111; }
 
-    #chat { width:100%; border:1px solid #fff; padding:12px; display:flex; flex-direction:column; min-height:340px; gap:10px; }
-    #messages { list-style:none; padding:0; margin:0; flex:1; overflow-y:auto; border:1px solid #333; }
-    #messages li { padding:8px 10px; border-bottom:1px solid #222; text-align:left; }
-    #messages li.me { text-align:right; }
+    #chat, #chatFun { width:100%; border:1px solid #fff; padding:12px; display:flex; flex-direction:column; min-height:340px; gap:10px; }
+    ul { list-style:none; padding:0; margin:0; flex:1; overflow-y:auto; border:1px solid #333; }
+    li { padding:8px 10px; border-bottom:1px solid #222; text-align:left; }
+    li.me { text-align:right; }
     .typing { opacity:.8; font-size:.9rem; min-height:1.2em; text-align:left; }
     .toolbar { display:flex; gap:8px; align-items:center; }
     .toolbar input[type="file"] { display:none; }
@@ -108,7 +108,7 @@
     <div id="gameArea">
       <div id="gameHeader">
         <div id="gameInfo">
-          <strong id="roomTitle"></strong>
+          <strong id="funRoomTitle"></strong>
           <span id="roleBadge"></span>
           <span id="scoreP1"></span>
           <span id="scoreP2"></span>
@@ -128,29 +128,51 @@
         <canvas id="board" width="720" height="480"></canvas>
       </div>
 
-      <!-- Chat below the game -->
-      <div id="chat">
+      <!-- Fun chat below the game -->
+      <div id="chatFun">
         <div class="toolbar">
-          <label class="file-label" for="fileInput">Attach file</label>
-          <input id="fileInput" type="file" accept="image/*,.txt"/>
+          <label class="file-label" for="fileInputFun">Attach file</label>
+          <input id="fileInputFun" type="file" accept="image/*,.txt"/>
           <span class="hint">Allowed: images & .txt (≤ 8 MB)</span>
         </div>
 
-        <div id="filePreview" class="file-preview" style="display:none; border:1px solid #555; padding:6px; margin:6px 0; text-align:left;"></div>
+        <div id="filePreviewFun" class="file-preview" style="display:none; border:1px solid #555; padding:6px; margin:6px 0; text-align:left;"></div>
 
-        <ul id="messages"></ul>
-        <div class="typing" id="typingIndicator"></div>
+        <ul id="messagesFun"></ul>
+        <div class="typing" id="typingIndicatorFun"></div>
 
-        <form id="form">
-          <input id="input" placeholder="Type message..."/>
-          <button id="send" type="submit">Send</button>
+        <form id="formFun">
+          <input id="inputFun" placeholder="Type message..."/>
+          <button id="sendFun" type="submit">Send</button>
         </form>
       </div>
     </div>
   </section>
 
-  <!-- Normal chat screen (kept for backward-compat, not used in funroom) -->
-  <section id="chatScreen" style="display:none;"></section>
+  <!-- Normal chat screen -->
+  <section id="chatScreen">
+    <div id="chat">
+      <h2 id="roomTitle"></h2>
+
+      <div class="toolbar">
+        <label class="file-label" for="fileInput">Attach file</label>
+        <input id="fileInput" type="file" accept="image/*,.txt"/>
+        <span class="hint">Allowed: images & .txt (≤ 8 MB)</span>
+      </div>
+
+      <div id="filePreview" class="file-preview" style="display:none; border:1px solid #555; padding:6px; margin:6px 0; text-align:left;"></div>
+
+      <ul id="messages"></ul>
+      <div class="typing" id="typingIndicator"></div>
+
+      <form id="form">
+        <input id="input" placeholder="Type message..."/>
+        <button id="send" type="submit">Send</button>
+      </form>
+
+      <button id="leaveBtn">Leave Chatroom</button>
+    </div>
+  </section>
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="client.js"></script>
