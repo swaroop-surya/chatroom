@@ -3,6 +3,8 @@ const socket = io();
 // Screens
 const joinScreen = document.getElementById("joinScreen");
 const menuScreen = document.getElementById("menuScreen");
+const chatroomsScreen = document.getElementById("chatroomsScreen");
+const funroomsScreen = document.getElementById("funroomsScreen");
 const chatScreen = document.getElementById("chatScreen");
 const funScreen = document.getElementById("funScreen");
 
@@ -10,10 +12,18 @@ const funScreen = document.getElementById("funScreen");
 const joinForm = document.getElementById("joinForm");
 const joinName = document.getElementById("joinName");
 
-// Menu buttons
+// Menu navigation buttons
+const chatroomsBtn = document.getElementById("chatroomsBtn");
+const funroomsBtn = document.getElementById("funroomsBtn");
+const backFromChatBtn = document.getElementById("backFromChatBtn");
+const backFromFunBtn = document.getElementById("backFromFunBtn");
+
+// Chatroom buttons
 const randomBtn = document.getElementById("randomBtn");
 const createBtn = document.getElementById("createBtn");
 const joinBtn = document.getElementById("joinBtn");
+
+// Funroom buttons
 const createFunBtn = document.getElementById("createFunBtn");
 const joinFunBtn = document.getElementById("joinFunBtn");
 
@@ -95,7 +105,7 @@ function getUserStyle(user) {
 
 // Helpers
 function show(screen) {
-  [joinScreen, menuScreen, chatScreen, funScreen].forEach(s => s.classList.remove("active"));
+  [joinScreen, menuScreen, chatroomsScreen, funroomsScreen, chatScreen, funScreen].forEach(s => s.classList.remove("active"));
   screen.classList.add("active");
 }
 function clearMessages(list) {
@@ -170,36 +180,42 @@ joinForm.addEventListener("submit", e => {
   e.preventDefault();
   username = joinName.value.trim() || "Anonymous";
   show(menuScreen);
-  refreshChatRooms();
-  refreshFunrooms();
 });
 
-// Menu actions
+// Main menu navigation
+chatroomsBtn.onclick = () => {
+  show(chatroomsScreen);
+  refreshChatRooms();
+};
+funroomsBtn.onclick = () => {
+  show(funroomsScreen);
+  refreshJoinableFunrooms();
+};
+
+// Back navigation
+backFromChatBtn.onclick = () => show(menuScreen);
+backFromFunBtn.onclick = () => show(menuScreen);
+
+// Chatroom actions
 randomBtn.onclick = () => joinRoom("lobby", "");
 createBtn.onclick = () => {
   createForm.style.display = "block";
   joinForm2.style.display = "none";
-  createFunForm.style.display = "none";
-  joinFunForm.style.display = "none";
 };
 joinBtn.onclick = () => {
   joinForm2.style.display = "block";
   createForm.style.display = "none";
-  createFunForm.style.display = "none";
-  joinFunForm.style.display = "none";
   refreshChatRooms();
 };
+
+// Funroom actions
 createFunBtn.onclick = () => {
   createFunForm.style.display = "block";
   joinFunForm.style.display = "none";
-  createForm.style.display = "none";
-  joinForm2.style.display = "none";
 };
 joinFunBtn.onclick = () => {
   joinFunForm.style.display = "block";
   createFunForm.style.display = "none";
-  createForm.style.display = "none";
-  joinForm2.style.display = "none";
   refreshJoinableFunrooms();
 };
 
@@ -350,14 +366,14 @@ socket.on("typing", ({ user, typing }) => {
 // Leave
 leaveBtn.onclick = () => {
   roomId = "";
-  show(menuScreen);
+  show(chatroomsScreen);
   refreshChatRooms();
 };
 leaveFunBtn.onclick = () => {
   roomId = "";
   currentRole = "";
   lastState = null;
-  show(menuScreen);
+  show(funroomsScreen);
   refreshJoinableFunrooms();
 };
 

@@ -215,16 +215,24 @@
     </form>
   </section>
 
-  <!-- Menu -->
+  <!-- Main Category Menu -->
   <section id="menuScreen">
     <h1>Choose</h1>
+    <div class="cards">
+      <div class="card" id="chatroomsBtn">Chatrooms</div>
+      <div class="card" id="funroomsBtn">Funrooms</div>
+    </div>
+  </section>
+
+  <!-- Chatrooms Menu -->
+  <section id="chatroomsScreen">
+    <h1>Chatrooms</h1>
     <div class="cards">
       <div class="card" id="randomBtn">Random Group Chat</div>
       <div class="card" id="createBtn">Create Chatroom</div>
       <div class="card" id="joinBtn">Join Chatroom</div>
-      <div class="card" id="createFunBtn">Create Funroom</div>
-      <div class="card" id="joinFunBtn">Join Funroom</div>
     </div>
+    <button id="backFromChatBtn" style="margin-top:20px;">← Back</button>
 
     <!-- Create Chat -->
     <div id="createForm" style="display:none; margin-top:16px;">
@@ -242,6 +250,16 @@
       <input id="joinPass" placeholder="Password" style="margin-top:10px;"/>
       <button id="joinRoomBtn">Join</button>
     </div>
+  </section>
+
+  <!-- Funrooms Menu -->
+  <section id="funroomsScreen">
+    <h1>Funrooms</h1>
+    <div class="cards">
+      <div class="card" id="createFunBtn">Create Funroom</div>
+      <div class="card" id="joinFunBtn">Join Funroom</div>
+    </div>
+    <button id="backFromFunBtn" style="margin-top:20px;">← Back</button>
 
     <!-- Create Funroom -->
     <div id="createFunForm" style="display:none; margin-top:16px;">
