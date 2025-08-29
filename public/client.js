@@ -26,9 +26,12 @@ const joinRoomView = document.getElementById("joinRoomView");
 const selectedRoomName = document.getElementById("selectedRoomName");
 const cancelJoinBtn = document.getElementById("cancelJoinBtn");
 
-// Funroom buttons
-const createFunBtn = document.getElementById("createFunBtn");
-const joinFunBtn = document.getElementById("joinFunBtn");
+// New funrooms interface elements
+const availableFunroomsList = document.getElementById("availableFunroomsList");
+const createFunroomView = document.getElementById("createFunroomView");
+const joinFunroomView = document.getElementById("joinFunroomView");
+const selectedFunroomName = document.getElementById("selectedFunroomName");
+const cancelJoinFunBtn = document.getElementById("cancelJoinFunBtn");
 
 // Create/join chatroom
 const createForm = document.getElementById("createForm");
@@ -205,7 +208,9 @@ chatroomsBtn.onclick = () => {
 };
 funroomsBtn.onclick = () => {
   show(funroomsScreen);
-  refreshJoinableFunrooms();
+  refreshAvailableFunrooms();
+  showCreateFunroomView();
+  startFunroomAutoRefresh();
 };
 
 // Back navigation
@@ -213,12 +218,20 @@ backFromChatBtn.onclick = () => {
   stopAutoRefresh();
   show(menuScreen);
 };
-backFromFunBtn.onclick = () => show(menuScreen);
+backFromFunBtn.onclick = () => {
+  stopFunroomAutoRefresh();
+  show(menuScreen);
+};
 
 // New chatroom interface variables
 let selectedRoomId = "";
 let selectedRoomPassword = "";
 let autoRefreshInterval = null;
+
+// New funroom interface variables
+let selectedFunroomId = "";
+let selectedFunroomPassword = "";
+let funroomAutoRefreshInterval = null;
 
 // Handle room selection from left panel
 function selectRoom(roomId, roomName, password) {
@@ -254,16 +267,46 @@ function showJoinRoomView() {
   joinPass.focus();
 }
 
-// Funroom actions
-createFunBtn.onclick = () => {
-  createFunForm.style.display = "block";
-  joinFunForm.style.display = "none";
-};
-joinFunBtn.onclick = () => {
-  joinFunForm.style.display = "block";
-  createFunForm.style.display = "none";
-  refreshJoinableFunrooms();
-};
+// Funroom interface functions
+function selectFunroom(funroomId, funroomName, password) {
+  selectedFunroomId = funroomId;
+  selectedFunroomPassword = password;
+  
+  // Update UI
+  document.querySelectorAll('#availableFunroomsList .room-item').forEach(item => {
+    item.classList.remove('selected');
+  });
+  
+  const funroomItem = document.querySelector(`[data-funroom-id="${funroomId}"]`);
+  if (funroomItem) funroomItem.classList.add('selected');
+  
+  selectedFunroomName.textContent = `Join: ${funroomName}`;
+  showJoinFunroomView();
+}
+
+function showCreateFunroomView() {
+  createFunroomView.style.display = "block";
+  joinFunroomView.style.display = "none";
+}
+
+function showJoinFunroomView() {
+  createFunroomView.style.display = "none";
+  joinFunroomView.style.display = "block";
+  joinFunPass.focus();
+}
+
+// Auto-refresh functionality for funrooms
+function startFunroomAutoRefresh() {
+  if (funroomAutoRefreshInterval) return;
+  funroomAutoRefreshInterval = setInterval(refreshAvailableFunrooms, 3000);
+}
+
+function stopFunroomAutoRefresh() {
+  if (funroomAutoRefreshInterval) {
+    clearInterval(funroomAutoRefreshInterval);
+    funroomAutoRefreshInterval = null;
+  }
+}
 
 // New chatroom interface event listeners
 createRoomBtn.onclick = () => {
@@ -297,6 +340,39 @@ cancelJoinBtn.onclick = () => {
 
 // Set up random room click handler
 randomRoomItem.onclick = () => selectRoom("lobby", "Random Group Chat", "");
+
+// New funroom interface event listeners
+createFunroomBtn.onclick = () => {
+  const name = newFunName.value.trim();
+  const pass = newFunPass.value.trim();
+  const mode = funMode.value;
+  const t60 = !!timer60.checked;
+  if (!name) return alert("Funroom name is required");
+  socket.emit("createFunroom", { roomName: name, password: pass, funMode: mode, timer60: t60 }, res => {
+    if (res.ok) {
+      newFunName.value = "";
+      newFunPass.value = "";
+      timer60.checked = false;
+      joinFunroomDirect(res.roomId, pass);
+    } else {
+      alert(res.error || "Failed to create funroom");
+    }
+  });
+};
+
+joinFunroomBtn.onclick = () => {
+  if (!selectedFunroomId) return alert("No funroom selected");
+  const pass = joinFunPass.value.trim();
+  joinFunroomDirect(selectedFunroomId, pass);
+};
+
+cancelJoinFunBtn.onclick = () => {
+  showCreateFunroomView();
+  document.querySelectorAll('#availableFunroomsList .room-item').forEach(item => {
+    item.classList.remove('selected');
+  });
+  joinFunPass.value = "";
+};
 function joinRoom(rid, pass) {
   socket.emit("joinRoom", { roomId: rid, password: pass, user: username }, res => {
     if (!res.ok) return alert(res.error || "Failed to join");
@@ -387,16 +463,37 @@ function refreshChatRooms() {
 function refreshFunrooms() {
   socket.emit("listFunrooms", () => {});
 }
-function refreshJoinableFunrooms() {
-  socket.emit("listJoinableFunrooms", list => {
-    funDropdown.innerHTML = `<option value="">-- Select a funroom --</option>`;
-    list.forEach(r => {
-      const opt = document.createElement("option");
-      opt.value = r.id;
-      opt.textContent = r.name;
-      funDropdown.appendChild(opt);
+// Updated funroom refresh for new interface
+function refreshAvailableFunrooms() {
+  socket.emit("listFunrooms", funrooms => {
+    // Clear existing funrooms
+    availableFunroomsList.innerHTML = "";
+    
+    // Add all funrooms
+    funrooms.forEach(f => {
+      const funroomDiv = document.createElement("div");
+      funroomDiv.className = "room-item";
+      funroomDiv.dataset.funroomId = f.id;
+      funroomDiv.dataset.password = f.password || "";
+      
+      let statusText = "";
+      if (f.players === 0) statusText = "Empty room";
+      else if (f.players === 1) statusText = "1 player - Joinable";
+      else statusText = `${f.players} players, ${f.spectators} spectators`;
+      
+      funroomDiv.innerHTML = `
+        <strong>${f.name}</strong>
+        <div style="font-size:0.9rem; opacity:0.8;">${statusText} • ${f.password ? 'Password protected' : 'Public'}</div>
+      `;
+      funroomDiv.onclick = () => selectFunroom(f.id, f.name, f.password || "");
+      availableFunroomsList.appendChild(funroomDiv);
     });
   });
+}
+
+// Legacy function for compatibility
+function refreshJoinableFunrooms() {
+  refreshAvailableFunrooms();
 }
 
 // Send message (chat)
@@ -468,7 +565,9 @@ leaveFunBtn.onclick = () => {
   currentRole = "";
   lastState = null;
   show(funroomsScreen);
-  refreshJoinableFunrooms();
+  refreshAvailableFunrooms();
+  showCreateFunroomView();
+  startFunroomAutoRefresh();
 };
 
 // Game input

@@ -13,15 +13,20 @@
   section {
     display: none;
     min-height: 100vh;
-    padding: 16px;
     box-sizing: border-box;
   }
   section.active {
+    display: block !important;
+  }
+  
+  /* Default section styling */
+  section.active:not(#chatroomsScreen):not(#funroomsScreen):not(#chatScreen):not(#funScreen) {
     display: flex !important;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     text-align: center;
+    padding: 16px;
   }
 
   /* Inputs + Buttons */
@@ -88,7 +93,7 @@
   }
 
   /* Split Layout for Chatrooms */
-  #chatroomsScreen {
+  #chatroomsScreen.active {
     display: flex !important;
     flex-direction: row !important;
     justify-content: flex-start !important;
@@ -99,7 +104,19 @@
     gap: 0;
   }
   
-  #chatLeft {
+  /* Split Layout for Funrooms */
+  #funroomsScreen.active {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: flex-start !important;
+    align-items: flex-start !important;
+    width: 100vw;
+    height: 100vh;
+    padding: 0;
+    gap: 0;
+  }
+  
+  #chatLeft, #funLeft {
     width: 35%;
     height: 100vh;
     background: #000;
@@ -109,7 +126,7 @@
     overflow-y: auto;
   }
   
-  #chatRight {
+  #chatRight, #funRight {
     width: 65%;
     height: 100vh;
     background: #000;
@@ -121,7 +138,7 @@
     align-items: center;
   }
   
-  #availableRoomsList {
+  #availableRoomsList, #availableFunroomsList {
     margin-top: 20px;
   }
   
@@ -330,40 +347,45 @@
     </div>
   </section>
 
-  <!-- Funrooms Menu -->
+  <!-- Funrooms Split Layout -->
   <section id="funroomsScreen">
-    <h1>Funrooms</h1>
-    <div class="cards">
-      <div class="card" id="createFunBtn">Create Funroom</div>
-      <div class="card" id="joinFunBtn">Join Funroom</div>
-    </div>
-    <button id="backFromFunBtn" style="margin-top:20px;">← Back</button>
-
-    <!-- Create Funroom -->
-    <div id="createFunForm" style="display:none; margin-top:16px;">
-      <h3>Create Funroom</h3>
-      <input id="newFunName" placeholder="Funroom name"/>
-      <input id="newFunPass" placeholder="Password (optional)"/>
-      <label>
-        Fun Mode:
-        <select id="funMode">
-          <option value="snake">Snake</option>
-        </select>
-      </label>
-      <label style="margin-left:12px;">
-        <input type="checkbox" id="timer60"/> 60s Timer
-      </label>
-      <button id="createFunroomBtn">Create</button>
+    <!-- Left Panel: Available Funrooms (35%) -->
+    <div id="funLeft">
+      <h2>Available funrooms</h2>
+      <button id="backFromFunBtn" style="margin-bottom:20px; width:100%;">← Back</button>
+      
+      <div id="availableFunroomsList">
+        <!-- Dynamic funrooms list will be populated here -->
+      </div>
     </div>
 
-    <!-- Join Funroom -->
-    <div id="joinFunForm" style="display:none; margin-top:16px;">
-      <h3>Join Funroom (shows rooms with exactly one player)</h3>
-      <select id="funDropdown" style="min-width:240px;">
-        <option value="">-- Select a funroom --</option>
-      </select>
-      <input id="joinFunPass" placeholder="Password (if any)" style="margin-top:10px;"/>
-      <button id="joinFunroomBtn">Join</button>
+    <!-- Right Panel: Create/Join Funroom (65%) -->
+    <div id="funRight">
+      <!-- Default Create Funroom View -->
+      <div id="createFunroomView">
+        <h2>Create funroom</h2>
+        <div style="max-width: 400px; width: 100%;">
+          <input id="newFunName" placeholder="Funroom name" style="width:100%; margin-bottom:15px;"/>
+          <input id="newFunPass" placeholder="Password (optional)" style="width:100%; margin-bottom:15px;"/>
+          <select id="funMode" style="width:48%; margin-right:4%; margin-bottom:15px;">
+            <option value="snake">Snake Game</option>
+          </select>
+          <label style="display:inline-block; width:48%; margin-bottom:15px;">
+            <input type="checkbox" id="timer60"/> 60s Timer
+          </label>
+          <button id="createFunroomBtn" style="width:100%;">Create Funroom</button>
+        </div>
+      </div>
+
+      <!-- Join Funroom View (shown when funroom is selected) -->
+      <div id="joinFunroomView" style="display:none;">
+        <h2 id="selectedFunroomName">Join Funroom</h2>
+        <div style="max-width: 400px; width: 100%;">
+          <input id="joinFunPass" placeholder="Enter password" style="width:100%; margin-bottom:20px;"/>
+          <button id="joinFunroomBtn" style="width:100%; margin-bottom:10px;">Join Funroom</button>
+          <button id="cancelJoinFunBtn" style="width:100%; background:#333;">Cancel</button>
+        </div>
+      </div>
     </div>
   </section>
 
