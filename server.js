@@ -98,10 +98,21 @@ function randCell() {
   return { x: Math.floor(Math.random() * GRID.w), y: Math.floor(Math.random() * GRID.h) };
 }
 function nextPos({ x, y }, dir) {
-  if (dir === "up") return { x, y: y - 1 };
-  if (dir === "down") return { x, y: y + 1 };
-  if (dir === "left") return { x: x - 1, y };
-  return { x: x + 1, y };
+  let newX = x, newY = y;
+  
+  if (dir === "up") newY = y - 1;
+  else if (dir === "down") newY = y + 1;
+  else if (dir === "left") newX = x - 1;
+  else newX = x + 1;
+  
+  // Wall-wrapping: snakes pass through walls and come from the other side
+  if (newX < 0) newX = GRID.w - 1;
+  else if (newX >= GRID.w) newX = 0;
+  
+  if (newY < 0) newY = GRID.h - 1;
+  else if (newY >= GRID.h) newY = 0;
+  
+  return { x: newX, y: newY };
 }
 function opposite(a, b) {
   return (a === "up" && b === "down") || (a === "down" && b === "up") || (a === "left" && b === "right") || (a === "right" && b === "left");
@@ -138,14 +149,13 @@ function tickSnake(state) {
   // Next heads
   const nextHeads = state.players.map(p => nextPos(p.head, p.dir));
 
-  // Collisions
-  const wallCrash = nextHeads.map(h => h.x < 0 || h.y < 0 || h.x >= GRID.w || h.y >= GRID.h);
+  // Collisions (wall-wrapping enabled - no wall crashes)
   const selfCrash = state.players.map((p, i) => p.body.some((s, idx) => idx !== 0 && s.x === nextHeads[i].x && s.y === nextHeads[i].y));
   const oppCrash = [0, 1].map(i => state.players[1 - i].body.some(s => s.x === nextHeads[i].x && s.y === nextHeads[i].y));
   const headToHead = nextHeads[0].x === nextHeads[1].x && nextHeads[0].y === nextHeads[1].y;
 
   let losers = [];
-  [0, 1].forEach(i => { if (wallCrash[i] || selfCrash[i] || oppCrash[i]) losers.push(i); });
+  [0, 1].forEach(i => { if (selfCrash[i] || oppCrash[i]) losers.push(i); });
   if (headToHead) losers = [0, 1];
 
   if (losers.length) {

@@ -33,14 +33,10 @@ const joinFunroomView = document.getElementById("joinFunroomView");
 const selectedFunroomName = document.getElementById("selectedFunroomName");
 const cancelJoinFunBtn = document.getElementById("cancelJoinFunBtn");
 
-// Create/join chatroom
-const createForm = document.getElementById("createForm");
+// Create/join chatroom elements  
 const newRoomName = document.getElementById("newRoomName");
 const newRoomPass = document.getElementById("newRoomPass");
 const createRoomBtn = document.getElementById("createRoomBtn");
-
-const joinForm2 = document.getElementById("joinForm2");
-const roomDropdown = document.getElementById("roomDropdown");
 const joinPass = document.getElementById("joinPass");
 const joinRoomBtn = document.getElementById("joinRoomBtn");
 
@@ -54,16 +50,12 @@ const form = document.getElementById("form");
 const input = document.getElementById("input");
 const leaveBtn = document.getElementById("leaveBtn");
 
-// Funroom create/join
-const createFunForm = document.getElementById("createFunForm");
+// Funroom create/join elements
 const newFunName = document.getElementById("newFunName");
 const newFunPass = document.getElementById("newFunPass");
 const funMode = document.getElementById("funMode");
 const timer60 = document.getElementById("timer60");
 const createFunroomBtn = document.getElementById("createFunroomBtn");
-
-const joinFunForm = document.getElementById("joinFunForm");
-const funDropdown = document.getElementById("funDropdown");
 const joinFunPass = document.getElementById("joinFunPass");
 const joinFunroomBtn = document.getElementById("joinFunroomBtn");
 
@@ -385,24 +377,8 @@ function joinRoom(rid, pass) {
   });
 }
 
-// Funroom create/join
-createFunroomBtn.onclick = () => {
-  const name = newFunName.value.trim();
-  const pass = newFunPass.value.trim();
-  const mode = funMode.value;
-  const t60 = !!timer60.checked;
-  if (!name) return alert("Funroom name required");
-  socket.emit("createFunroom", { roomName: name, password: pass, funMode: mode, timer60: t60 }, res => {
-    if (res.ok) joinFunroomDirect(res.roomId, pass);
-    else alert(res.error || "Failed to create funroom");
-  });
-};
-joinFunroomBtn.onclick = () => {
-  const rid = funDropdown.value;
-  const pass = joinFunPass.value.trim();
-  if (!rid) return alert("Choose a funroom");
-  joinFunroomDirect(rid, pass);
-};
+// Old funroom handlers removed - replaced by new split interface handlers above
+// Old joinFunroomBtn handler removed - replaced by new split interface
 function joinFunroomDirect(rid, pass) {
   socket.emit("joinFunroom", { roomId: rid, password: pass, user: username }, res => {
     if (!res.ok) return alert(res.error || "Failed to join funroom");
