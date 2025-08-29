@@ -56,7 +56,7 @@
   }
 
   /* Menu options (cards) */
-  #menuScreen .cards {
+  .cards {
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -64,18 +64,85 @@
     max-width: 320px;
     margin-bottom: 20px;
   }
-  #menuScreen .card {
-    border: 1px solid #fff;
-    padding: 12px;
+  .card {
+    border: 2px solid #fff;
+    padding: 16px 12px;
     text-align: center;
     cursor: pointer;
     transition: all 0.2s ease-in-out;
-    border-radius: 6px;
+    border-radius: 8px;
+    background: #000;
+    color: #fff;
+    font-weight: bold;
+    min-height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
   }
-  #menuScreen .card:hover,
-  #menuScreen .card:focus {
-    box-shadow: 0 0 10px #fff;
+  .card:hover,
+  .card:focus {
+    box-shadow: 0 0 12px #fff;
     transform: translateY(-2px);
+    background: #111;
+  }
+
+  /* Split Layout for Chatrooms */
+  #chatroomsScreen {
+    display: flex !important;
+    flex-direction: row !important;
+    justify-content: flex-start !important;
+    align-items: flex-start !important;
+    width: 100vw;
+    height: 100vh;
+    padding: 0;
+    gap: 0;
+  }
+  
+  #chatLeft {
+    width: 35%;
+    height: 100vh;
+    background: #000;
+    border-right: 2px solid #fff;
+    padding: 20px;
+    box-sizing: border-box;
+    overflow-y: auto;
+  }
+  
+  #chatRight {
+    width: 65%;
+    height: 100vh;
+    background: #000;
+    padding: 20px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  #availableRoomsList {
+    margin-top: 20px;
+  }
+  
+  .room-item {
+    border: 1px solid #fff;
+    padding: 12px;
+    margin: 8px 0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    background: #111;
+  }
+  
+  .room-item:hover {
+    box-shadow: 0 0 8px #fff;
+    background: #222;
+  }
+  
+  .room-item.selected {
+    border-color: #4cb3ff;
+    box-shadow: 0 0 10px #4cb3ff;
   }
 
   /* Forms inside menu */
@@ -224,31 +291,42 @@
     </div>
   </section>
 
-  <!-- Chatrooms Menu -->
+  <!-- Chatrooms Split Layout -->
   <section id="chatroomsScreen">
-    <h1>Chatrooms</h1>
-    <div class="cards">
-      <div class="card" id="randomBtn">Random Group Chat</div>
-      <div class="card" id="createBtn">Create Chatroom</div>
-      <div class="card" id="joinBtn">Join Chatroom</div>
-    </div>
-    <button id="backFromChatBtn" style="margin-top:20px;">← Back</button>
-
-    <!-- Create Chat -->
-    <div id="createForm" style="display:none; margin-top:16px;">
-      <input id="newRoomName" placeholder="Room name"/>
-      <input id="newRoomPass" placeholder="Password"/>
-      <button id="createRoomBtn">Create</button>
+    <!-- Left Panel: Available Chatrooms (35%) -->
+    <div id="chatLeft">
+      <h2>Available chatrooms</h2>
+      <button id="backFromChatBtn" style="margin-bottom:20px; width:100%;">← Back</button>
+      
+      <div id="availableRoomsList">
+        <div class="room-item" id="randomRoomItem" data-room-id="lobby" data-password="">
+          <strong>Random Group Chat</strong>
+          <div style="font-size:0.9rem; opacity:0.8;">Public room - No password</div>
+        </div>
+      </div>
     </div>
 
-    <!-- Join Chat -->
-    <div id="joinForm2" style="display:none; margin-top:16px;">
-      <h3>Available Chatrooms</h3>
-      <select id="roomDropdown" style="min-width:240px;">
-        <option value="">-- Select a room --</option>
-      </select>
-      <input id="joinPass" placeholder="Password" style="margin-top:10px;"/>
-      <button id="joinRoomBtn">Join</button>
+    <!-- Right Panel: Create/Join Room (65%) -->
+    <div id="chatRight">
+      <!-- Default Create Room View -->
+      <div id="createRoomView">
+        <h2>Create chatroom</h2>
+        <div style="max-width: 400px; width: 100%;">
+          <input id="newRoomName" placeholder="Room name" style="width:48%; margin-right:4%; margin-bottom:20px;"/>
+          <input id="newRoomPass" placeholder="Password (optional)" style="width:48%; margin-bottom:20px;"/>
+          <button id="createRoomBtn" style="width:100%;">Create</button>
+        </div>
+      </div>
+
+      <!-- Join Room View (shown when room is selected) -->
+      <div id="joinRoomView" style="display:none;">
+        <h2 id="selectedRoomName">Join Room</h2>
+        <div style="max-width: 400px; width: 100%;">
+          <input id="joinPass" placeholder="Enter password" style="width:100%; margin-bottom:20px;"/>
+          <button id="joinRoomBtn" style="width:100%; margin-bottom:10px;">Join Room</button>
+          <button id="cancelJoinBtn" style="width:100%; background:#333;">Cancel</button>
+        </div>
+      </div>
     </div>
   </section>
 

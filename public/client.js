@@ -18,10 +18,13 @@ const funroomsBtn = document.getElementById("funroomsBtn");
 const backFromChatBtn = document.getElementById("backFromChatBtn");
 const backFromFunBtn = document.getElementById("backFromFunBtn");
 
-// Chatroom buttons
-const randomBtn = document.getElementById("randomBtn");
-const createBtn = document.getElementById("createBtn");
-const joinBtn = document.getElementById("joinBtn");
+// New chatrooms interface elements
+const availableRoomsList = document.getElementById("availableRoomsList");
+const randomRoomItem = document.getElementById("randomRoomItem");
+const createRoomView = document.getElementById("createRoomView");
+const joinRoomView = document.getElementById("joinRoomView");
+const selectedRoomName = document.getElementById("selectedRoomName");
+const cancelJoinBtn = document.getElementById("cancelJoinBtn");
 
 // Funroom buttons
 const createFunBtn = document.getElementById("createFunBtn");
@@ -175,17 +178,30 @@ function resizeCanvasToGrid() {
   board.height = cell * 16;
 }
 
-// Join
+// Join - with localStorage persistence
 joinForm.addEventListener("submit", e => {
   e.preventDefault();
   username = joinName.value.trim() || "Anonymous";
+  localStorage.setItem('chatroom_username', username);
   show(menuScreen);
+});
+
+// Check for saved username on page load
+window.addEventListener('load', () => {
+  const savedUsername = localStorage.getItem('chatroom_username');
+  if (savedUsername) {
+    username = savedUsername;
+    joinName.value = savedUsername;
+    show(menuScreen);
+  }
 });
 
 // Main menu navigation
 chatroomsBtn.onclick = () => {
   show(chatroomsScreen);
-  refreshChatRooms();
+  refreshAvailableRooms();
+  showCreateRoomView();
+  startAutoRefresh();
 };
 funroomsBtn.onclick = () => {
   show(funroomsScreen);
@@ -193,20 +209,50 @@ funroomsBtn.onclick = () => {
 };
 
 // Back navigation
-backFromChatBtn.onclick = () => show(menuScreen);
+backFromChatBtn.onclick = () => {
+  stopAutoRefresh();
+  show(menuScreen);
+};
 backFromFunBtn.onclick = () => show(menuScreen);
 
-// Chatroom actions
-randomBtn.onclick = () => joinRoom("lobby", "");
-createBtn.onclick = () => {
-  createForm.style.display = "block";
-  joinForm2.style.display = "none";
-};
-joinBtn.onclick = () => {
-  joinForm2.style.display = "block";
-  createForm.style.display = "none";
-  refreshChatRooms();
-};
+// New chatroom interface variables
+let selectedRoomId = "";
+let selectedRoomPassword = "";
+let autoRefreshInterval = null;
+
+// Handle room selection from left panel
+function selectRoom(roomId, roomName, password) {
+  selectedRoomId = roomId;
+  selectedRoomPassword = password;
+  
+  // Update UI
+  document.querySelectorAll('.room-item').forEach(item => {
+    item.classList.remove('selected');
+  });
+  
+  if (roomId === "lobby") {
+    // Random room - join directly
+    joinRoom("lobby", "");
+  } else {
+    // Regular room - show join form
+    const roomItem = document.querySelector(`[data-room-id="${roomId}"]`);
+    if (roomItem) roomItem.classList.add('selected');
+    
+    selectedRoomName.textContent = `Join: ${roomName}`;
+    showJoinRoomView();
+  }
+}
+
+function showCreateRoomView() {
+  createRoomView.style.display = "block";
+  joinRoomView.style.display = "none";
+}
+
+function showJoinRoomView() {
+  createRoomView.style.display = "none";
+  joinRoomView.style.display = "block";
+  joinPass.focus();
+}
 
 // Funroom actions
 createFunBtn.onclick = () => {
@@ -219,22 +265,38 @@ joinFunBtn.onclick = () => {
   refreshJoinableFunrooms();
 };
 
-// Chatroom create/join
+// New chatroom interface event listeners
 createRoomBtn.onclick = () => {
   const name = newRoomName.value.trim();
   const pass = newRoomPass.value.trim();
-  if (!name) return;
+  if (!name) return alert("Room name is required");
   socket.emit("createRoom", { roomName: name, password: pass }, res => {
-    if (res.ok) joinRoom(res.roomId, pass);
-    else alert(res.error || "Failed to create room");
+    if (res.ok) {
+      newRoomName.value = "";
+      newRoomPass.value = "";
+      joinRoom(res.roomId, pass);
+    } else {
+      alert(res.error || "Failed to create room");
+    }
   });
 };
+
 joinRoomBtn.onclick = () => {
-  const rid = roomDropdown.value;
+  if (!selectedRoomId) return alert("No room selected");
   const pass = joinPass.value.trim();
-  if (!rid) return alert("Choose a room");
-  joinRoom(rid, pass);
+  joinRoom(selectedRoomId, pass);
 };
+
+cancelJoinBtn.onclick = () => {
+  showCreateRoomView();
+  document.querySelectorAll('.room-item').forEach(item => {
+    item.classList.remove('selected');
+  });
+  joinPass.value = "";
+};
+
+// Set up random room click handler
+randomRoomItem.onclick = () => selectRoom("lobby", "Random Group Chat", "");
 function joinRoom(rid, pass) {
   socket.emit("joinRoom", { roomId: rid, password: pass, user: username }, res => {
     if (!res.ok) return alert(res.error || "Failed to join");
@@ -280,17 +342,47 @@ function joinFunroomDirect(rid, pass) {
   });
 }
 
-// Refresh lists
-function refreshChatRooms() {
+// Auto-refresh functionality
+function startAutoRefresh() {
+  if (autoRefreshInterval) return;
+  autoRefreshInterval = setInterval(refreshAvailableRooms, 3000); // Refresh every 3 seconds
+}
+
+function stopAutoRefresh() {
+  if (autoRefreshInterval) {
+    clearInterval(autoRefreshInterval);
+    autoRefreshInterval = null;
+  }
+}
+
+// Updated room refresh for new interface
+function refreshAvailableRooms() {
   socket.emit("listRooms", rooms => {
-    roomDropdown.innerHTML = `<option value="">-- Select a room --</option>`;
+    // Clear existing rooms (except random room)
+    const existingRooms = availableRoomsList.querySelectorAll('.room-item:not(#randomRoomItem)');
+    existingRooms.forEach(room => room.remove());
+    
+    // Add new rooms
     rooms.forEach(r => {
-      const opt = document.createElement("option");
-      opt.value = r.id;
-      opt.textContent = `${r.name} (${r.users} online)`;
-      roomDropdown.appendChild(opt);
+      if (r.id !== "lobby") { // Skip lobby since it's already shown as random room
+        const roomDiv = document.createElement("div");
+        roomDiv.className = "room-item";
+        roomDiv.dataset.roomId = r.id;
+        roomDiv.dataset.password = r.password || "";
+        roomDiv.innerHTML = `
+          <strong>${r.name}</strong>
+          <div style="font-size:0.9rem; opacity:0.8;">${r.users} users online • ${r.password ? 'Password protected' : 'Public'}</div>
+        `;
+        roomDiv.onclick = () => selectRoom(r.id, r.name, r.password || "");
+        availableRoomsList.appendChild(roomDiv);
+      }
     });
   });
+}
+
+// Legacy function for compatibility
+function refreshChatRooms() {
+  refreshAvailableRooms();
 }
 function refreshFunrooms() {
   socket.emit("listFunrooms", () => {});
@@ -367,7 +459,9 @@ socket.on("typing", ({ user, typing }) => {
 leaveBtn.onclick = () => {
   roomId = "";
   show(chatroomsScreen);
-  refreshChatRooms();
+  refreshAvailableRooms();
+  showCreateRoomView();
+  startAutoRefresh();
 };
 leaveFunBtn.onclick = () => {
   roomId = "";
