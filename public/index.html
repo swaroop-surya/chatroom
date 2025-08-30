@@ -367,9 +367,10 @@
         <div style="max-width: 400px; width: 100%;">
           <input id="newFunName" placeholder="Funroom name" style="width:100%; margin-bottom:15px;"/>
           <input id="newFunPass" placeholder="Password (optional)" style="width:100%; margin-bottom:15px;"/>
-          <select id="funMode" style="width:48%; margin-right:4%; margin-bottom:15px;">
-            <option value="snake">Snake Game</option>
-          </select>
+         <select id="funMode" style="width:48%; margin-right:4%; margin-bottom:15px;">
+          <option value="snake">Snake Game</option>
+          <option value="tictactoe">Tic-Tac-Toe</option>
+         </select>
           <label style="display:inline-block; width:48%; margin-bottom:15px;">
             <input type="checkbox" id="timer60"/> 60s Timer
           </label>
@@ -413,6 +414,31 @@
     <div id="canvasWrap">
       <canvas id="board" width="720" height="480"></canvas>
     </div>
+    <!-- Tic-Tac-Toe (hidden by default; shown when funMode === "tictactoe") -->
+<div id="ticTacToeWrap" style="display:none; padding:12px; box-sizing:border-box;">
+  <div id="tttHud" style="text-align:center; margin-bottom:8px;">
+    Turn: <strong id="tttTurn">X</strong>
+  </div>
+
+  <div id="tttBoard" class="ttt-board" style="margin: 0 auto;">
+    <button class="ttt-cell" data-i="0"></button>
+    <button class="ttt-cell" data-i="1"></button>
+    <button class="ttt-cell" data-i="2"></button>
+
+    <button class="ttt-cell" data-i="3"></button>
+    <button class="ttt-cell" data-i="4"></button>
+    <button class="ttt-cell" data-i="5"></button>
+
+    <button class="ttt-cell" data-i="6"></button>
+    <button class="ttt-cell" data-i="7"></button>
+    <button class="ttt-cell" data-i="8"></button>
+  </div>
+
+  <div id="tttResult" style="text-align:center; margin-top:10px; min-height:1.2em;"></div>
+  <div style="text-align:center; margin-top:10px;">
+    <button id="tttRestart" style="padding:8px 12px; border-radius:6px;">Restart Game</button>
+  </div>
+</div>
 
     <!-- Chat below the game -->
     <div id="chatFun">
