@@ -18,33 +18,3 @@ main{padding:1rem;overflow:auto}.upload{background:var(--panel);border:1px solid
 .file-head .name{font-weight:800}.file-head .meta{color:var(--muted);font-size:.9rem}
 .file-actions{margin-left:auto;display:flex;gap:.5rem}.file-actions a{color:var(--accent);text-decoration:none}
 .preview{margin-top:.4rem;background:#0a1423;border:1px solid #263241;border-radius:.6rem;padding:.6rem;max-height:220px;overflow:auto;white-space:pre-wrap;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace}
-/* Tic-Tac-Toe styles (monospace, black/white theme) */
-.ttt-board {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-  width: 320px;
-  max-width: 90%;
-}
-
-.ttt-cell {
-  aspect-ratio: 1 / 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: monospace;
-  font-size: 48px;
-  background: transparent;
-  color: var(--text, #fff);
-  border: 2px solid rgba(255,255,255,0.08);
-  border-radius: 6px;
-  cursor: pointer;
-  user-select: none;
-  padding: 0;
-}
-
-.ttt-cell:active {
-  transform: scale(0.99);
-}
-#tttHud { color: var(--text,#fff); }
-#tttResult { color: var(--text,#fff); font-weight: bold; }
