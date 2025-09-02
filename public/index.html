@@ -210,8 +210,27 @@
   #messages li, #messagesFun li { padding:8px 10px; border-bottom:1px solid #222; text-align:left; }
   #messages li.me, #messagesFun li.me { text-align:right; }
 
+  /* Desktop layout for forms */
   #form, #formFun { display: flex; align-items: center; gap: 8px; }
   #form input, #formFun input { flex: 1; }
+  
+  /* Hide mobile elements on desktop */
+  @media (min-width: 769px) {
+    .mobile-input-row {
+      display: contents;
+    }
+    .attach-btn {
+      display: none;
+    }
+    .file-label {
+      display: inline-block !important;
+    }
+    .mobile-btn {
+      width: auto;
+      height: auto;
+      padding: 10px 12px;
+    }
+  }
 
   #leaveBtn, #leaveFunBtn { width: 100%; margin-top: 6px; }
   .typing { opacity:.8; font-size:.9rem; min-height:1.2em; text-align:left; }
@@ -281,10 +300,87 @@
   }
   #messages li.me .avatar, #messagesFun li.me .avatar { display: none; }
 
-  /* Responsive */
+  /* Mobile Layout for Chat */
   @media (max-width:768px) {
-    input,button,select { width:100%; font-size:.95rem; }
+    input,button,select { font-size:.95rem; }
     #gameHeader { flex-direction:column; align-items:flex-start; gap:8px; }
+    
+    /* Mobile chat form layout */
+    #form, #formFun { 
+      display: flex; 
+      flex-direction: column;
+      gap: 12px; 
+    }
+    
+    /* Message input and buttons row */
+    .mobile-input-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+    }
+    
+    /* Input field takes most space */
+    #form input[type="text"], #formFun input[type="text"] { 
+      flex: 1; 
+      min-width: 0;
+    }
+    
+    /* Icon-style buttons */
+    .mobile-btn {
+      width: 44px;
+      height: 44px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      border-radius: 8px;
+      flex-shrink: 0;
+    }
+    
+    /* Hide file labels on mobile */
+    .file-label {
+      display: none;
+    }
+    
+    /* Style file input as button */
+    .attach-btn {
+      position: relative;
+      background: #333;
+      border: 1px solid #fff;
+      color: #fff;
+      width: 44px;
+      height: 44px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    
+    .attach-btn input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+    
+    /* Leave button full width below */
+    #leaveBtn, #leaveFunBtn { 
+      width: 100%; 
+      margin-top: 0;
+      order: 2;
+    }
+    
+    /* File preview adjustments */
+    #filePreview, #filePreviewFun {
+      order: 1;
+      margin-bottom: 8px;
+    }
   }
 </style>
 
@@ -420,10 +516,15 @@
       <div class="typing" id="typingIndicatorFun"></div>
 
       <form id="formFun">
+        <div class="mobile-input-row">
+          <div class="attach-btn">
+            <input id="fileInputFun" type="file" accept="image/*,.txt"/>
+            📎
+          </div>
+          <input id="inputFun" type="text" placeholder="Type message..."/>
+          <button id="sendFun" type="submit" class="mobile-btn">➤</button>
+        </div>
         <label class="file-label" for="fileInputFun">Attach</label>
-        <input id="fileInputFun" type="file" accept="image/*,.txt"/>
-        <input id="inputFun" placeholder="Type message..."/>
-        <button id="sendFun" type="submit">Send</button>
       </form>
 
       <div id="filePreviewFun" class="file-preview" style="display:none;">
@@ -443,10 +544,15 @@
       <div class="typing" id="typingIndicator"></div>
 
       <form id="form">
+        <div class="mobile-input-row">
+          <div class="attach-btn">
+            <input id="fileInput" type="file" accept="image/*,.txt"/>
+            📎
+          </div>
+          <input id="input" type="text" placeholder="Type message..."/>
+          <button id="send" type="submit" class="mobile-btn">➤</button>
+        </div>
         <label class="file-label" for="fileInput">Attach</label>
-        <input id="fileInput" type="file" accept="image/*,.txt"/>
-        <input id="input" placeholder="Type message..."/>
-        <button id="send" type="submit">Send</button>
       </form>
 
       <div id="filePreview" class="file-preview" style="display:none;">
