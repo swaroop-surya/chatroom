@@ -560,6 +560,28 @@ window.addEventListener("keydown", e => {
   }
 });
 
+// Mobile snake controls
+const upBtn = document.getElementById("upBtn");
+const downBtn = document.getElementById("downBtn");
+const leftBtn = document.getElementById("leftBtn");
+const rightBtn = document.getElementById("rightBtn");
+
+function handleMobileInput(direction) {
+  if (!roomId || currentRole !== "player") return;
+  socket.emit("playerInput", { roomId, dir: direction });
+}
+
+upBtn?.addEventListener("click", () => handleMobileInput("up"));
+downBtn?.addEventListener("click", () => handleMobileInput("down"));
+leftBtn?.addEventListener("click", () => handleMobileInput("left"));
+rightBtn?.addEventListener("click", () => handleMobileInput("right"));
+
+// Add touch events for better mobile responsiveness
+upBtn?.addEventListener("touchstart", (e) => { e.preventDefault(); handleMobileInput("up"); });
+downBtn?.addEventListener("touchstart", (e) => { e.preventDefault(); handleMobileInput("down"); });
+leftBtn?.addEventListener("touchstart", (e) => { e.preventDefault(); handleMobileInput("left"); });
+rightBtn?.addEventListener("touchstart", (e) => { e.preventDefault(); handleMobileInput("right"); });
+
 // Game events
 socket.on("gameState", state => {
   if (!roomId || state.id !== roomId) return;

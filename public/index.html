@@ -347,8 +347,8 @@
     /* Style file input as button */
     .attach-btn {
       position: relative;
-      background: #333;
-      border: 1px solid #fff;
+      background: #000;
+      border: 2px solid #fff;
       color: #fff;
       width: 44px;
       height: 44px;
@@ -358,6 +358,12 @@
       justify-content: center;
       cursor: pointer;
       flex-shrink: 0;
+      transition: all 0.2s ease-in-out;
+    }
+    
+    .attach-btn:hover {
+      box-shadow: 0 0 8px #fff;
+      background: #111;
     }
     
     .attach-btn input[type="file"] {
@@ -380,6 +386,49 @@
     #filePreview, #filePreviewFun {
       order: 1;
       margin-bottom: 8px;
+    }
+    
+    /* Hide chat in funrooms on mobile */
+    #chatFun {
+      display: none;
+    }
+    
+    /* Snake game controls for mobile */
+    .snake-controls {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      margin-top: 20px;
+      padding: 20px;
+    }
+    
+    .controls-row {
+      display: flex;
+      gap: 10px;
+    }
+    
+    .control-btn {
+      width: 60px;
+      height: 60px;
+      border: 2px solid #fff;
+      background: #000;
+      color: #fff;
+      border-radius: 12px;
+      font-size: 24px;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease-in-out;
+      user-select: none;
+    }
+    
+    .control-btn:active {
+      background: #333;
+      box-shadow: 0 0 12px #fff;
+      transform: scale(0.95);
     }
   }
 </style>
@@ -508,6 +557,18 @@
 
     <div id="canvasWrap">
       <canvas id="board" width="720" height="480"></canvas>
+    </div>
+
+    <!-- Mobile Snake Controls -->
+    <div class="snake-controls">
+      <div class="controls-row">
+        <button class="control-btn" id="upBtn">↑</button>
+      </div>
+      <div class="controls-row">
+        <button class="control-btn" id="leftBtn">←</button>
+        <button class="control-btn" id="downBtn">↓</button>
+        <button class="control-btn" id="rightBtn">→</button>
+      </div>
     </div>
 
     <!-- Chat below the game -->
