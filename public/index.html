@@ -534,12 +534,9 @@
         <div style="max-width: 400px; width: 100%;">
           <input id="newFunName" placeholder="Funroom name" style="width:100%; margin-bottom:15px;"/>
           <input id="newFunPass" placeholder="Password (optional)" style="width:100%; margin-bottom:15px;"/>
-          <select id="funMode" style="width:48%; margin-right:4%; margin-bottom:15px;">
+          <select id="funMode" style="width:100%; margin-bottom:15px;">
             <option value="snake">Snake Game</option>
           </select>
-          <label style="display:inline-block; width:48%; margin-bottom:15px;">
-            <input type="checkbox" id="timer60"/> 60s Timer
-          </label>
           <button id="createFunroomBtn" style="width:100%;">Create Funroom</button>
         </div>
       </div>
@@ -565,14 +562,10 @@
         <span id="roleBadge"></span>
         <span id="scoreP1"></span>
         <span id="scoreP2"></span>
-        <span id="timerLabel"></span>
         <span id="spectators"></span>
       </div>
       <div>
         <button id="playAgainBtn">Play Again</button>
-        <label style="margin-left:8px;">
-          <input type="checkbox" id="timer60Replay"/> 60s Timer
-        </label>
         <button id="leaveFunBtn" style="margin-left:8px;">Leave Funroom</button>
       </div>
     </div>

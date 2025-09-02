@@ -54,7 +54,6 @@ const leaveBtn = document.getElementById("leaveBtn");
 const newFunName = document.getElementById("newFunName");
 const newFunPass = document.getElementById("newFunPass");
 const funMode = document.getElementById("funMode");
-const timer60 = document.getElementById("timer60");
 const createFunroomBtn = document.getElementById("createFunroomBtn");
 const joinFunPass = document.getElementById("joinFunPass");
 const joinFunroomBtn = document.getElementById("joinFunroomBtn");
@@ -64,10 +63,8 @@ const funRoomTitle = document.getElementById("funRoomTitle");
 const roleBadge = document.getElementById("roleBadge");
 const scoreP1 = document.getElementById("scoreP1");
 const scoreP2 = document.getElementById("scoreP2");
-const timerLabel = document.getElementById("timerLabel");
 const spectators = document.getElementById("spectators");
 const playAgainBtn = document.getElementById("playAgainBtn");
-const timer60Replay = document.getElementById("timer60Replay");
 const leaveFunBtn = document.getElementById("leaveFunBtn");
 
 const board = document.getElementById("board");
@@ -338,13 +335,11 @@ createFunroomBtn.onclick = () => {
   const name = newFunName.value.trim();
   const pass = newFunPass.value.trim();
   const mode = funMode.value;
-  const t60 = !!timer60.checked;
   if (!name) return alert("Funroom name is required");
-  socket.emit("createFunroom", { roomName: name, password: pass, funMode: mode, timer60: t60 }, res => {
+  socket.emit("createFunroom", { roomName: name, password: pass, funMode: mode, timer60: false }, res => {
     if (res.ok) {
       newFunName.value = "";
       newFunPass.value = "";
-      timer60.checked = false;
       joinFunroomDirect(res.roomId, pass);
     } else {
       alert(res.error || "Failed to create funroom");
@@ -451,15 +446,7 @@ function refreshAvailableFunrooms() {
       funroomDiv.dataset.funroomId = f.id;
       funroomDiv.dataset.password = f.password || "";
       
-      let statusText = "";
-      if (f.players === 0) statusText = "Empty room";
-      else if (f.players === 1) statusText = "1 player - Joinable";
-      else statusText = `${f.players} players, ${f.spectators} spectators`;
-      
-      funroomDiv.innerHTML = `
-        <strong>${f.name}</strong>
-        <div style="font-size:0.9rem; opacity:0.8;">${statusText} • ${f.password ? 'Password protected' : 'Public'}</div>
-      `;
+      funroomDiv.innerHTML = `<strong>${f.name}</strong>`;
       funroomDiv.onclick = () => selectFunroom(f.id, f.name, f.password || "");
       availableFunroomsList.appendChild(funroomDiv);
     });
@@ -571,7 +558,7 @@ socket.on("gameState", state => {
   draw(state);
 });
 playAgainBtn.onclick = () => {
-  if (roomId) socket.emit("playAgain", { roomId, timer60: !!timer60Replay.checked });
+  if (roomId) socket.emit("playAgain", { roomId, timer60: false });
 };
 
 // HUD + draw
@@ -582,10 +569,6 @@ function updateHud(state) {
   scoreP1.textContent = p1 ? `P1(${p1.name}) Score: ${p1.score}` : "P1 waiting…";
   scoreP2.textContent = p2 ? `P2(${p2.name}) Score: ${p2.score}` : "P2 waiting…";
   spectators.textContent = state.spectators?.length ? `Spectators: ${state.spectators.length}` : "Spectators: 0";
-  if (state.timerEndsAt) {
-    const ms = Math.max(0, state.timerEndsAt - Date.now());
-    timerLabel.textContent = `Timer: ${Math.ceil(ms / 1000)}s`;
-  } else timerLabel.textContent = "";
 
   if (state.status === "gameover") {
     if (state.winner === null) alert("Result: Draw!");
