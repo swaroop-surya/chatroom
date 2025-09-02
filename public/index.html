@@ -214,6 +214,22 @@
   #form, #formFun { display: flex; align-items: center; gap: 8px; }
   #form input, #formFun input { flex: 1; }
   
+  /* Desktop file label styling */
+  .file-label {
+    background: #000;
+    border: 2px solid #fff;
+    color: #fff;
+    padding: 10px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+  }
+  
+  .file-label:hover {
+    box-shadow: 0 0 8px #fff;
+    background: #111;
+  }
+
   /* Hide mobile elements on desktop */
   @media (min-width: 769px) {
     .mobile-input-row {
@@ -230,10 +246,16 @@
       height: auto;
       padding: 10px 12px;
     }
+    .snake-controls {
+      display: none;
+    }
   }
 
   #leaveBtn, #leaveFunBtn { width: 100%; margin-top: 6px; }
   .typing { opacity:.8; font-size:.9rem; min-height:1.2em; text-align:left; }
+  
+  /* Hide chat completely in funrooms */
+  #chatFun { display: none !important; }
 
   /* File preview styling */
   .file-preview {
@@ -388,11 +410,6 @@
       margin-bottom: 8px;
     }
     
-    /* Hide chat in funrooms on mobile */
-    #chatFun {
-      display: none;
-    }
-    
     /* Snake game controls for mobile */
     .snake-controls {
       display: flex;
@@ -409,26 +426,31 @@
     }
     
     .control-btn {
-      width: 60px;
-      height: 60px;
-      border: 2px solid #fff;
-      background: #000;
-      color: #fff;
-      border-radius: 12px;
-      font-size: 24px;
-      font-weight: bold;
+      width: 65px;
+      height: 65px;
+      border: 1px solid #444;
+      background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+      color: #495057;
+      border-radius: 16px;
+      font-size: 28px;
+      font-weight: normal;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: all 0.2s ease-in-out;
+      transition: all 0.15s ease-in-out;
       user-select: none;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.2);
     }
     
     .control-btn:active {
-      background: #333;
-      box-shadow: 0 0 12px #fff;
-      transform: scale(0.95);
+      background: linear-gradient(145deg, #dee2e6, #ced4da);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.15), inset 0 2px 4px rgba(0,0,0,0.1);
+      transform: translateY(1px);
+    }
+    
+    .control-btn:hover {
+      background: linear-gradient(145deg, #ffffff, #f1f3f4);
     }
   }
 </style>
@@ -571,28 +593,7 @@
       </div>
     </div>
 
-    <!-- Chat below the game -->
-    <div id="chatFun">
-      <ul id="messagesFun"></ul>
-      <div class="typing" id="typingIndicatorFun"></div>
-
-      <form id="formFun">
-        <div class="mobile-input-row">
-          <div class="attach-btn">
-            <input id="fileInputFun" type="file" accept="image/*,.txt"/>
-            📎
-          </div>
-          <input id="inputFun" type="text" placeholder="Type message..."/>
-          <button id="sendFun" type="submit" class="mobile-btn">➤</button>
-        </div>
-        <label class="file-label" for="fileInputFun">Attach</label>
-      </form>
-
-      <div id="filePreviewFun" class="file-preview" style="display:none;">
-        <span id="fileNameFun"></span>
-        <button type="button" id="removeFileBtnFun" class="remove-btn">❌</button>
-      </div>
-    </div>
+    <!-- Chat removed from funrooms -->
   </div>
 </section>
 
