@@ -73,13 +73,13 @@ const leaveFunBtn = document.getElementById("leaveFunBtn");
 const board = document.getElementById("board");
 const ctx = board.getContext("2d");
 
-// Fun chat
-const messagesFun = document.getElementById("messagesFun");
-const typingIndicatorFun = document.getElementById("typingIndicatorFun");
-const fileInputFun = document.getElementById("fileInputFun");
-const filePreviewFun = document.getElementById("filePreviewFun");
-const formFun = document.getElementById("formFun");
-const inputFun = document.getElementById("inputFun");
+// Fun chat elements (removed from HTML, keeping variables for compatibility)
+const messagesFun = null;
+const typingIndicatorFun = null;
+const fileInputFun = null;
+const filePreviewFun = null;
+const formFun = null;
+const inputFun = null;
 
 // State
 let username = "";
@@ -385,8 +385,7 @@ function joinFunroomDirect(rid, pass) {
     roomId = rid;
     currentRole = res.role;
     funRoomTitle.textContent = res.roomName;
-    clearMessages(messagesFun);
-    res.messages.forEach(m => addMessageToList(m, messagesFun, username));
+    // Chat removed from funrooms - no message display needed
     show(funScreen);
     resizeCanvasToGrid();
     updateHud(res.state);
@@ -493,39 +492,21 @@ form.addEventListener("submit", async e => {
 input.addEventListener("input", () => socket.emit("typing", { roomId, typing: input.value.length > 0 }));
 
 // Send message (fun)
-formFun.addEventListener("submit", async e => {
-  e.preventDefault();
-  if (!roomId) return;
-  let text = inputFun.value.trim();
-  let fileData = null;
-  if (fileInputFun.files[0]) {
-    const data = new FormData();
-    data.append("file", fileInputFun.files[0]);
-    const resp = await fetch("/upload", { method: "POST", body: data });
-    const json = await resp.json();
-    if (json.ok) fileData = json.file;
-    fileInputFun.value = "";
-    filePreviewFun.style.display = "none";
-  }
-  if (text || fileData) socket.emit("chatMessage", { roomId, user: username, text, file: fileData });
-  inputFun.value = "";
-});
-inputFun.addEventListener("input", () => socket.emit("typing", { roomId, typing: inputFun.value.length > 0 }));
+// Funroom chat form removed - no chat functionality in funrooms
 
 // Socket chat events
 socket.on("chatMessage", msg => {
   if (currentRole === "chat") addMessageToList(msg, messages, username);
-  else if (roomId) addMessageToList(msg, messagesFun, username);
+  // No chat functionality in funrooms
 });
 socket.on("messageDeleted", ({ msgId }) => {
   const li1 = messages.querySelector(`li[data-id="${msgId}"]`);
-  const li2 = messagesFun.querySelector(`li[data-id="${msgId}"]`);
   if (li1) li1.remove();
-  if (li2) li2.remove();
+  // No message deletion in funrooms
 });
 socket.on("typing", ({ user, typing }) => {
   if (currentRole === "chat") typingIndicator.textContent = typing ? `${user} is typing...` : "";
-  else typingIndicatorFun.textContent = typing ? `${user} is typing...` : "";
+  // No typing indicators in funrooms
 });
 
 // Leave
